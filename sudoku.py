@@ -84,6 +84,15 @@ class SudokuSolver(object):
                 peers.append(peer)
         return peers
 
+    def output_board(self):
+        width = 1 + max(len(self.starting_grid[s]) for s in boxes)
+        line = '+'.join(['-' * (width * 3)] * 3)
+        for r in self.rows:
+            print(''.join(self.starting_grid[r + c].center(width) + ('|' if c in '36' else '')
+                          for c in self.cols))
+            if r in 'CF':
+                print(line)
+
 
 class SudokuSolverTest(TestCase):
     def test_get_row_peers(self):
