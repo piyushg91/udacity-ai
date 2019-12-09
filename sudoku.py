@@ -6,7 +6,7 @@ class SudokuSolver(object):
     rows = 'ABCDEFGHI'
     cols = '123456789'
 
-    def __init__(self, starting_grid: Dict[str, str]):
+    def __init__(self, starting_grid):
         self.starting_grid = starting_grid
 
     def eliminate(self):
@@ -21,19 +21,33 @@ class SudokuSolver(object):
         for box in self.starting_grid.keys():
             value = self.starting_grid[box]
             if len(value) == 1:
-                self.eliminate_from_row(value, box)
-                # Remove from
+                self.eliminate_from_peers(value, box)
 
-    def eliminate_from_row(self, value_to_remove: str, target_box: str):
-        row = target_box[0]
-        for col in self.cols:
-            box = row + col
-            if box == target_box:
+    def eliminate_from_peers(self, value, box):
+        self.eliminate_from_row(value, box)
+        self.eliminate_from_col(value, box)
+        self.eliminate_from_box(value, box)
+
+    def eliminate_from_given_peers(self, peers, value_to_remove: str):
+        for peer in peers:
+            current_value = self.starting_grid[peer]
+            if current_value.__len__() == 1:
                 continue
-            current_value = self.starting_grid[box]
             if value_to_remove in current_value:
                 new_value = current_value.replace(value_to_remove, '')
-                self.starting_grid[box] = new_value
+                self.starting_grid[peer] = new_value
+
+    def eliminate_from_row(self, value_to_remove: str, target_box: str):
+        row_peers = self.get_row_peers(target_box)
+        self.eliminate_from_given_peers(row_peers, value_to_remove)
+
+    def eliminate_from_col(self, value_to_remove: str, target_box: str):
+        cols_peers = self.get_col_peers(target_box)
+        self.eliminate_from_given_peers(cols_peers, value_to_remove)
+
+    def eliminate_from_box(self, value_to_remove: str, target_box: str):
+        box_peers = self.get_box_peers(target_box)
+        self.eliminate_from_given_peers(box_peers, value_to_remove)
 
     @classmethod
     def get_col_peers(cls, target_box: str):
