@@ -83,8 +83,12 @@ class SudokuSolver(object):
                 peers.append(peer)
         return peers
 
+    @classmethod
+    def get_all_box_indicies(cls):
+        return [row + col for row in cls.rows for col in cls.cols]
+
     def output_board(self):
-        width = 1 + max(len(self.starting_grid[s]) for s in boxes)
+        width = 1 + max(len(self.starting_grid[s]) for s in self.get_all_box_indicies())
         line = '+'.join(['-' * (width * 3)] * 3)
         for r in self.rows:
             print(''.join(self.starting_grid[r + c].center(width) + ('|' if c in '36' else '')
@@ -92,4 +96,19 @@ class SudokuSolver(object):
             if r in 'CF':
                 print(line)
 
+    @classmethod
+    def create_dict_from_str_input(cls, str_input: str):
+        answer = {}
+        for i, loc in enumerate(cls.get_all_box_indicies()):
+            value = str_input[i]
+            if value == '.':
+                answer[loc] = '123456789'
+            else:
+                answer[loc] = value
+        return answer
 
+
+if __name__ == '__main__':
+    d = SudokuSolver.create_dict_from_str_input('..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..')
+    s = SudokuSolver(d)
+    s.output_board()
