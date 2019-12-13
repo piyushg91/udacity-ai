@@ -174,16 +174,35 @@ class SudokuSolver(object):
                 self.logger.info('Type 1 elimination for {0}: {1} with value {2}'.format(identifier, box, key))
                 self.eliminate_from_peers(key, box)
 
-    def do_brute_force(self):
+    def solve_the_puzzle(self):
+        self.eliminate(check_for_singular_values=True)
         result = self.brute_force()
         if result:
             self.logger.info('Successfully solved the puzzle')
+            self.output_board()
         else:
             raise Exception('Could not solve puzzle')
-        pass
 
-    def brute_force(self):
-        pass
+    def brute_force(self) -> bool:
+        unsolved = []
+        for box in self.get_all_box_indicies():
+            value = self.starting_grid[box]
+            if len(value) > 1:
+                unsolved.append((box, value))
+        if len(unsolved) == 0:
+            return True
+        unsolved.sort(key=lambda x: len(x[1]))
+        for unsolved_box, unsolved_pos_values in unsolved:
+            for unsolved_pos in unsolved_pos_values:
+                new_grid = self.starting_grid.copy()
+                new_solver = SudokuSolver(new_grid)
+                new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
+                new_solver.eliminate(check_for_singular_values=False)
+                output = new_solver.brute_force()
+                if output:
+                    self.starting_grid = new_solver.starting_grid
+                    return True
+        return False
 
 
 
