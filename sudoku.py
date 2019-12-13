@@ -11,10 +11,7 @@ class SudokuSolver(object):
         self.logger = logging.getLogger('Main Logger')
 
     def eliminate(self):
-        """Eliminate values from peers of each box with a single value.
-
-        Go through all the boxes, and whenever there is a box with a single value,
-        eliminate this value from the set of values of all its peers.
+        """Eliminate values from peers using various strategies
 
         Returns:
             Resulting Sudoku in dictionary form after eliminating values.
@@ -23,6 +20,9 @@ class SudokuSolver(object):
             value = self.starting_grid[box]
             if len(value) == 1:
                 self.eliminate_from_peers(value, box)
+        self.do_type_1_elims_with_cols()
+        self.do_type_1_elims_with_row()
+        self.do_type_1_elims_with_box()
 
     def eliminate_from_peers(self, value, box):
         self.logger.info('Elimating {0} for {1}'.format(value, box))
@@ -80,6 +80,13 @@ class SudokuSolver(object):
             yield [target] + col_peers
 
     @classmethod
+    def get_boxs_as_list(cls):
+        starting = ['A1', 'A4', 'A7', 'D1', 'D4', 'D7', 'G1', 'G4', 'G7']
+        for box_target in starting:
+            peers = cls.get_box_peers(box_target)
+            yield [box_target] + peers
+
+    @classmethod
     def get_box_peers(cls, target_box: str):
         row, col = target_box[0], target_box[1]
         row_index = cls.rows.find(row)
@@ -107,6 +114,7 @@ class SudokuSolver(object):
         return [row + col for row in cls.rows for col in cls.cols]
 
     def output_board(self):
+        print("=======")
         width = 1 + max(len(self.starting_grid[s]) for s in self.get_all_box_indicies())
         line = '+'.join(['-' * (width * 3)] * 3)
         for r in self.rows:
@@ -114,6 +122,7 @@ class SudokuSolver(object):
                           for c in self.cols))
             if r in 'CF':
                 print(line)
+        print("=======\n")
 
     @classmethod
     def create_dict_from_str_input(cls, str_input: str):
@@ -141,7 +150,8 @@ class SudokuSolver(object):
             self.do_type_1_eliminations(row, 'row')
 
     def do_type_1_elims_with_box(self):
-        pass
+        for box in self.get_boxs_as_list():
+            self.do_type_1_eliminations(box, 'box')
 
     def do_type_1_eliminations(self, group_peer: List[str], identifier: str):
         """
@@ -163,6 +173,18 @@ class SudokuSolver(object):
                 self.starting_grid[box] = key
                 self.eliminate_from_peers(key, boxes_found[0])
 
+    def do_brute_force(self):
+        result = self.brute_force()
+        if result:
+            self.logger.info('Successfully solved the puzzle')
+        else:
+            raise Exception('Could not solve puzzle')
+        pass
+
+    def brute_force(self):
+        pass
+
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
@@ -176,11 +198,5 @@ if __name__ == '__main__':
 
     d = SudokuSolver.create_dict_from_str_input('4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......')
     s = SudokuSolver(d)
-    s.output_board()
-    print('====')
     s.eliminate()
-    s.output_board()
-    print('=====')
-    s.do_type_1_elims_with_cols()
-    s.do_type_1_elims_with_row()
     s.output_board()
