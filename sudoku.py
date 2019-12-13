@@ -8,6 +8,7 @@ class SudokuSolver(object):
 
     def __init__(self, starting_grid):
         self.starting_grid = starting_grid
+        self.logger = logging.getLogger('Main Logger')
 
     def eliminate(self):
         """Eliminate values from peers of each box with a single value.
@@ -24,6 +25,7 @@ class SudokuSolver(object):
                 self.eliminate_from_peers(value, box)
 
     def eliminate_from_peers(self, value, box):
+        self.logger.info('Elimating {0} for {1}'.format(value, box))
         self.eliminate_from_row(value, box)
         self.eliminate_from_col(value, box)
         self.eliminate_from_box(value, box)
@@ -132,16 +134,21 @@ class SudokuSolver(object):
 
     def do_type_1_elims_with_cols(self):
         for col in self.get_cols_as_list():
-            self.do_type_1_eliminations(col)
+            self.do_type_1_eliminations(col, 'col')
 
     def do_type_1_elims_with_row(self):
         for row in self.get_rows_as_list():
-            self.do_type_1_eliminations(row)
+            self.do_type_1_eliminations(row, 'row')
 
     def do_type_1_elims_with_box(self):
         pass
 
-    def do_type_1_eliminations(self, group_peer: List[str]):
+    def do_type_1_eliminations(self, group_peer: List[str], identifier: str):
+        """
+        :param group_peer:
+        :param identifier:
+        :return:
+        """
         count_map = {str(i): [] for i in range(1, 10)}
         for box in group_peer:
             value = self.starting_grid[box]
@@ -152,18 +159,20 @@ class SudokuSolver(object):
             boxes_found = count_map[key]
             if count_map[key].__len__() == 1:
                 box = boxes_found[0]
-                print('Found type1 elimination on {0} with value {1}'.format(box, key))
+                self.logger.info('Type 1 elimination for {0}: {1} with value {2}'.format(identifier, box, key))
                 self.starting_grid[box] = key
                 self.eliminate_from_peers(key, boxes_found[0])
 
 
 if __name__ == '__main__':
-    d = SudokuSolver.create_dict_from_str_input('..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..')
-    s = SudokuSolver(d)
-    s.output_board()
-    s.eliminate()
-    s.output_board()
-    print(s.is_solved())
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    # d = SudokuSolver.create_dict_from_str_input('..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..')
+    # s = SudokuSolver(d)
+    # s.output_board()
+    # s.eliminate()
+    # s.output_board()
+    # print(s.is_solved())
 
     d = SudokuSolver.create_dict_from_str_input('4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......')
     s = SudokuSolver(d)
