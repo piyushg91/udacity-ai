@@ -10,22 +10,24 @@ class SudokuSolver(object):
         self.starting_grid = starting_grid
         self.logger = logging.getLogger('Main Logger')
 
-    def eliminate(self):
+    def eliminate(self, check_for_singular_values:bool = True):
         """Eliminate values from peers using various strategies
 
         Returns:
             Resulting Sudoku in dictionary form after eliminating values.
         """
-        for box in self.starting_grid.keys():
-            value = self.starting_grid[box]
-            if len(value) == 1:
-                self.eliminate_from_peers(value, box)
+        if check_for_singular_values:
+            for box in self.starting_grid.keys():
+                value = self.starting_grid[box]
+                if len(value) == 1:
+                    self.eliminate_from_peers(value, box)
         self.do_type_1_elims_with_cols()
         self.do_type_1_elims_with_row()
         self.do_type_1_elims_with_box()
 
     def eliminate_from_peers(self, value, box):
         self.logger.info('Elimating {0} for {1}'.format(value, box))
+        self.starting_grid[box] = value
         self.eliminate_from_row(value, box)
         self.eliminate_from_col(value, box)
         self.eliminate_from_box(value, box)
@@ -170,8 +172,7 @@ class SudokuSolver(object):
             if count_map[key].__len__() == 1:
                 box = boxes_found[0]
                 self.logger.info('Type 1 elimination for {0}: {1} with value {2}'.format(identifier, box, key))
-                self.starting_grid[box] = key
-                self.eliminate_from_peers(key, boxes_found[0])
+                self.eliminate_from_peers(key, box)
 
     def do_brute_force(self):
         result = self.brute_force()
@@ -198,5 +199,4 @@ if __name__ == '__main__':
 
     d = SudokuSolver.create_dict_from_str_input('4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......')
     s = SudokuSolver(d)
-    s.eliminate()
-    s.output_board()
+    s.solve_the_puzzle()
