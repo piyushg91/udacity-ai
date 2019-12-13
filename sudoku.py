@@ -1,4 +1,5 @@
-from typing import Dict
+import logging
+from typing import Dict, List
 
 
 class SudokuSolver(object):
@@ -35,6 +36,8 @@ class SudokuSolver(object):
             if value_to_remove in current_value:
                 new_value = current_value.replace(value_to_remove, '')
                 self.starting_grid[peer] = new_value
+                if new_value.__len__() == 1:
+                    self.eliminate_from_peers(new_value, peer)
 
     def eliminate_from_row(self, value_to_remove: str, target_box: str):
         row_peers = self.get_row_peers(target_box)
@@ -59,6 +62,20 @@ class SudokuSolver(object):
         target_row, target_col = target_box[0], target_box[1]
         peers = [target_row + col for col in cls.cols if col != target_col]
         return peers
+
+    @classmethod
+    def get_rows_as_list(cls):
+        for row in cls.rows:
+            target = row + '1'
+            row_peers = cls.get_row_peers(target)
+            yield [target] + row_peers
+
+    @classmethod
+    def get_cols_as_list(cls):
+        for col in cls.cols:
+            target = 'A' + col
+            col_peers = cls.get_col_peers(target)
+            yield [target] + col_peers
 
     @classmethod
     def get_box_peers(cls, target_box: str):
@@ -107,8 +124,54 @@ class SudokuSolver(object):
                 answer[loc] = value
         return answer
 
+    def is_solved(self):
+        for key in self.starting_grid:
+            if self.starting_grid[key].__len__() != 1:
+                return False
+        return True
+
+    def do_type_1_elims_with_cols(self):
+        for col in self.get_cols_as_list():
+            self.do_type_1_eliminations(col)
+
+    def do_type_1_elims_with_row(self):
+        for row in self.get_rows_as_list():
+            self.do_type_1_eliminations(row)
+
+    def do_type_1_elims_with_box(self):
+        pass
+
+    def do_type_1_eliminations(self, group_peer: List[str]):
+        count_map = {str(i): [] for i in range(1, 10)}
+        for box in group_peer:
+            value = self.starting_grid[box]
+            if len(value) > 1:
+                for pos in value:
+                    count_map[pos].append(box)
+        for key in count_map.keys():
+            boxes_found = count_map[key]
+            if count_map[key].__len__() == 1:
+                box = boxes_found[0]
+                print('Found type1 elimination on {0} with value {1}'.format(box, key))
+                self.starting_grid[box] = key
+                self.eliminate_from_peers(key, boxes_found[0])
+
 
 if __name__ == '__main__':
     d = SudokuSolver.create_dict_from_str_input('..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..')
     s = SudokuSolver(d)
+    s.output_board()
+    s.eliminate()
+    s.output_board()
+    print(s.is_solved())
+
+    d = SudokuSolver.create_dict_from_str_input('4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......')
+    s = SudokuSolver(d)
+    s.output_board()
+    print('====')
+    s.eliminate()
+    s.output_board()
+    print('=====')
+    s.do_type_1_elims_with_cols()
+    s.do_type_1_elims_with_row()
     s.output_board()
