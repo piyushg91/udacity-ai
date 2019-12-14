@@ -68,6 +68,19 @@ class SudokuSolver(object):
         return peers
 
     @classmethod
+    def get_left_diagonal(cls):
+        for i, row in enumerate(cls.rows):
+            box = row + cls.cols[i]
+            yield box
+
+    @classmethod
+    def get_right_diagonal(cls):
+        reversed_cols = list(reversed(cls.cols))
+        for i, row in enumerate(cls.rows):
+            box = row + reversed_cols[i]
+            yield box
+
+    @classmethod
     def get_rows_as_list(cls):
         for row in cls.rows:
             target = row + '1'
@@ -182,6 +195,18 @@ class SudokuSolver(object):
             self.output_board()
         else:
             raise Exception('Could not solve puzzle')
+
+    def check_if_diagonals_are_uniquely_solved(self):
+        for diagonal in [self.get_left_diagonal(), self.get_right_diagonal()]:
+            seen = set()
+            for box in diagonal:
+                value = self.starting_grid[box]
+                if len(value) > 1:
+                    continue
+                if value in seen:
+                    return False
+                seen.add(value)
+        return True
 
     def brute_force(self) -> bool:
         unsolved = []
