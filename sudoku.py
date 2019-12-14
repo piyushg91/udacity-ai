@@ -2,13 +2,32 @@ import logging
 from typing import Dict, List, Set
 
 
+class InvalidBoardException(Exception):
+    pass
+
+
 class SudokuSolver(object):
     rows = 'ABCDEFGHI'
     cols = '123456789'
 
-    def __init__(self, starting_grid: Dict[str, str]):
+    def __init__(self, starting_grid: Dict[str, str], depth:int=1):
         self.board = starting_grid
-        self.logger = logging.getLogger('Main Logger')
+        self.logger = logging.getLogger('Main Logger ' + str(depth))
+        self.depth = depth
+        self.logger.info('Instantiated with depth ' + str(self.depth))
+        self.left_diagonal = set()
+        self.right_diagonal = set()
+        self.set_diagonals()
+
+    def set_diagonals(self):
+        for i, row in enumerate(self.rows):
+            box = row + self.cols[i]
+            self.left_diagonal.add(box)
+
+        reversed_cols = list(reversed(self.cols))
+        for i, row in enumerate(self.rows):
+            box = row + reversed_cols[i]
+            self.right_diagonal.add(box)
 
     def eliminate(self, check_for_singular_values:bool = True):
         """Eliminate values from peers using various strategies
@@ -68,19 +87,6 @@ class SudokuSolver(object):
         return peers
 
     @classmethod
-    def get_left_diagonal(cls):
-        for i, row in enumerate(cls.rows):
-            box = row + cls.cols[i]
-            yield box
-
-    @classmethod
-    def get_right_diagonal(cls):
-        reversed_cols = list(reversed(cls.cols))
-        for i, row in enumerate(cls.rows):
-            box = row + reversed_cols[i]
-            yield box
-
-    @classmethod
     def get_rows_as_list(cls):
         for row in cls.rows:
             target = row + '1'
@@ -129,15 +135,15 @@ class SudokuSolver(object):
         return [row + col for row in cls.rows for col in cls.cols]
 
     def output_board(self):
-        print("=======")
+        self.logger.info("=======")
         width = 1 + max(len(self.board[s]) for s in self.get_all_box_indicies())
         line = '+'.join(['-' * (width * 3)] * 3)
         for r in self.rows:
-            print(''.join(self.board[r + c].center(width) + ('|' if c in '36' else '')
+            self.logger.info(''.join(self.board[r + c].center(width) + ('|' if c in '36' else '')
                           for c in self.cols))
             if r in 'CF':
-                print(line)
-        print("=======\n")
+                self.logger.info(line)
+        self.logger.info("=======\n")
 
     @classmethod
     def create_dict_from_str_input(cls, str_input: str):
@@ -244,8 +250,9 @@ class SudokuSolver(object):
             raise Exception('Could not solve puzzle')
 
     def check_if_diagonals_are_uniquely_solved(self):
-        for diagonal in [self.get_left_diagonal(), self.get_right_diagonal()]:
+        for diagonal in [self.left_diagonal, self.right_diagonal]:
             seen = set()
+            diagonal = list(diagonal)
             for box in diagonal:
                 value = self.board[box]
                 if len(value) > 1:
