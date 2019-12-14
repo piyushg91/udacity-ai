@@ -1,12 +1,12 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Set
 
 
 class SudokuSolver(object):
     rows = 'ABCDEFGHI'
     cols = '123456789'
 
-    def __init__(self, starting_grid):
+    def __init__(self, starting_grid: Dict[str, str]):
         self.starting_grid = starting_grid
         self.logger = logging.getLogger('Main Logger')
 
@@ -186,6 +186,53 @@ class SudokuSolver(object):
                 box = boxes_found[0]
                 self.logger.info('Type 1 elimination for {0}: {1} with value {2}'.format(identifier, box, key))
                 self.eliminate_from_peers(key, box)
+
+    def apply_all_naked_pair_elims(self, cascade:bool=True):
+        self.apply_naked_pair_elims_with_cols(cascade)
+        self.apply_naked_pair_elims_with_rows(cascade)
+        self.apply_naked_pair_elims_with_boxes(cascade)
+
+    def apply_naked_pair_elims_with_cols(self, cascade):
+        for col in self.get_cols_as_list():
+            self.apply_naked_pair_with_select_peers(col, 'col', cascade)
+
+    def apply_naked_pair_elims_with_rows(self, cascade):
+        for row in self.get_rows_as_list():
+            self.apply_naked_pair_with_select_peers(row, 'row', cascade)
+
+    def apply_naked_pair_elims_with_boxes(self, cascade):
+        for box in self.get_boxs_as_list():
+            self.apply_naked_pair_with_select_peers(box, 'box', cascade)
+
+    def apply_naked_pair_with_select_peers(self, group_peer: List[str], identifier: str, cascade: bool):
+        self.logger.info('processsing {0}: {1} for naked pairs'.format(identifier, group_peer[0]))
+        unsolved_map = {}
+        unsolved_boxes = set()
+        for box in group_peer:
+            value = self.starting_grid[box]
+            if value.__len__() > 1:
+                unsolved_boxes.add(box)
+                if value in unsolved_map:
+                    unsolved_map[value].add(box)
+                else:
+                    unsolved_map[value] = {box}
+        for unsolved_combination in unsolved_map:
+            pair_len = len(unsolved_combination)
+            pair_count = len(unsolved_map[unsolved_combination])
+            if pair_count != pair_len:
+                continue
+            boxes_to_change = unsolved_boxes - unsolved_map[unsolved_combination]
+            if boxes_to_change:
+                self.remove_numbers_from_sequence(unsolved_combination, boxes_to_change, cascade)
+
+    def remove_numbers_from_sequence(self, to_remove: str, boxes_to_change: Set[str], cascade: bool):
+        for box in boxes_to_change:
+            current_value = self.starting_grid[box]
+            for num in to_remove:
+                current_value = current_value.replace(num, '')
+            self.starting_grid[box] = current_value
+            if cascade and len(current_value) == 1:
+                self.eliminate_from_peers(current_value, box)
 
     def solve_the_puzzle(self):
         self.eliminate(check_for_singular_values=True)
