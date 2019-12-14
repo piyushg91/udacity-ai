@@ -7,7 +7,7 @@ class SudokuSolver(object):
     cols = '123456789'
 
     def __init__(self, starting_grid: Dict[str, str]):
-        self.starting_grid = starting_grid
+        self.board = starting_grid
         self.logger = logging.getLogger('Main Logger')
 
     def eliminate(self, check_for_singular_values:bool = True):
@@ -17,8 +17,8 @@ class SudokuSolver(object):
             Resulting Sudoku in dictionary form after eliminating values.
         """
         if check_for_singular_values:
-            for box in self.starting_grid.keys():
-                value = self.starting_grid[box]
+            for box in self.board.keys():
+                value = self.board[box]
                 if len(value) == 1:
                     self.eliminate_from_peers(value, box)
         self.do_type_1_elims_with_cols()
@@ -27,19 +27,19 @@ class SudokuSolver(object):
 
     def eliminate_from_peers(self, value, box):
         self.logger.info('Elimating {0} for {1}'.format(value, box))
-        self.starting_grid[box] = value
+        self.board[box] = value
         self.eliminate_from_row(value, box)
         self.eliminate_from_col(value, box)
         self.eliminate_from_box(value, box)
 
     def eliminate_from_given_peers(self, peers, value_to_remove: str):
         for peer in peers:
-            current_value = self.starting_grid[peer]
+            current_value = self.board[peer]
             if current_value.__len__() == 1:
                 continue
             if value_to_remove in current_value:
                 new_value = current_value.replace(value_to_remove, '')
-                self.starting_grid[peer] = new_value
+                self.board[peer] = new_value
                 if new_value.__len__() == 1:
                     self.eliminate_from_peers(new_value, peer)
 
@@ -130,10 +130,10 @@ class SudokuSolver(object):
 
     def output_board(self):
         print("=======")
-        width = 1 + max(len(self.starting_grid[s]) for s in self.get_all_box_indicies())
+        width = 1 + max(len(self.board[s]) for s in self.get_all_box_indicies())
         line = '+'.join(['-' * (width * 3)] * 3)
         for r in self.rows:
-            print(''.join(self.starting_grid[r + c].center(width) + ('|' if c in '36' else '')
+            print(''.join(self.board[r + c].center(width) + ('|' if c in '36' else '')
                           for c in self.cols))
             if r in 'CF':
                 print(line)
@@ -151,8 +151,8 @@ class SudokuSolver(object):
         return answer
 
     def is_solved(self):
-        for key in self.starting_grid:
-            if self.starting_grid[key].__len__() != 1:
+        for key in self.board:
+            if self.board[key].__len__() != 1:
                 return False
         return True
 
@@ -176,7 +176,7 @@ class SudokuSolver(object):
         """
         count_map = {str(i): [] for i in range(1, 10)}
         for box in group_peer:
-            value = self.starting_grid[box]
+            value = self.board[box]
             if len(value) > 1:
                 for pos in value:
                     count_map[pos].append(box)
@@ -209,7 +209,7 @@ class SudokuSolver(object):
         unsolved_map = {}
         unsolved_boxes = set()
         for box in group_peer:
-            value = self.starting_grid[box]
+            value = self.board[box]
             if value.__len__() > 1:
                 unsolved_boxes.add(box)
                 if value in unsolved_map:
@@ -227,10 +227,10 @@ class SudokuSolver(object):
 
     def remove_numbers_from_sequence(self, to_remove: str, boxes_to_change: Set[str], cascade: bool):
         for box in boxes_to_change:
-            current_value = self.starting_grid[box]
+            current_value = self.board[box]
             for num in to_remove:
                 current_value = current_value.replace(num, '')
-            self.starting_grid[box] = current_value
+            self.board[box] = current_value
             if cascade and len(current_value) == 1:
                 self.eliminate_from_peers(current_value, box)
 
@@ -247,7 +247,7 @@ class SudokuSolver(object):
         for diagonal in [self.get_left_diagonal(), self.get_right_diagonal()]:
             seen = set()
             for box in diagonal:
-                value = self.starting_grid[box]
+                value = self.board[box]
                 if len(value) > 1:
                     continue
                 if value in seen:
@@ -258,7 +258,7 @@ class SudokuSolver(object):
     def brute_force(self) -> bool:
         unsolved = []
         for box in self.get_all_box_indicies():
-            value = self.starting_grid[box]
+            value = self.board[box]
             if len(value) > 1:
                 unsolved.append((box, value))
         if len(unsolved) == 0:
@@ -266,13 +266,13 @@ class SudokuSolver(object):
         unsolved.sort(key=lambda x: len(x[1]))
         for unsolved_box, unsolved_pos_values in unsolved:
             for unsolved_pos in unsolved_pos_values:
-                new_grid = self.starting_grid.copy()
+                new_grid = self.board.copy()
                 new_solver = SudokuSolver(new_grid)
                 new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
                 new_solver.eliminate(check_for_singular_values=False)
                 output = new_solver.brute_force()
                 if output:
-                    self.starting_grid = new_solver.starting_grid
+                    self.board = new_solver.board
                     return True
         return False
 
