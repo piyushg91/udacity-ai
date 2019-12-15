@@ -38,7 +38,7 @@ class SudokuSolver(object):
             if len(value) == 1:
                 self.eliminate_from_peers(value, box)
 
-    def eliminate(self):
+    def base_eliminate(self):
         """Eliminate values from peers using various strategies
 
         Returns:
@@ -273,7 +273,7 @@ class SudokuSolver(object):
 
     def solve_the_puzzle(self):
         self.pre_process()
-        self.eliminate()
+        self.base_eliminate()
         self.output_board()
         result = self.brute_force()
         if result:
@@ -338,7 +338,7 @@ class SudokuSolver(object):
                                                                              unsolved_box))
                 try:
                     new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
-                    new_solver.eliminate()
+                    new_solver.base_eliminate()
                     output = new_solver.brute_force()
                 except InvalidBoardException as e:
                     new_solver.logger.info('Invalid board found: ' + e.args[0])
