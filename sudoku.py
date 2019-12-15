@@ -50,10 +50,9 @@ class SudokuSolver(object):
         self.apply_all_naked_pair_elims(cascade=True)
         if not self.check_if_diagonals_are_uniquely_solved():
             self.output_board()
-            raise InvalidBoardException('Diagnols not uniquely solved')
+            raise InvalidBoardException('Diagonals not uniquely solved')
         if self.is_solved() and not self.check_if_board_is_valid():
-            self.output_board()
-            raise InvalidBoardException
+            self.check_if_board_is_valid()
 
     def eliminate_from_peers(self, value, box, diagonal_elimination:bool=True):
         self.logger.info('Eliminating {0} for {1}'.format(value, box))
@@ -275,40 +274,29 @@ class SudokuSolver(object):
             raise Exception('Could not solve puzzle')
 
     def check_if_board_is_valid(self):
+        errors = []
         for row in self.get_rows_as_list():
-            seen = set()
-            for box in row:
-                value = self.board[box]
-                if len(value) == 0:
-                    return False
-                if len(value) == 1:
-                    if value not in seen:
-                        seen.add(value)
-                    else:
-                        return False
+            errors += self.check_if_peer_is_valid(row, 'row')
         for col in self.get_cols_as_list():
-            seen = set()
-            for box in col:
-                value = self.board[box]
-                if len(value) == 0:
-                    return False
-                if len(value) == 1:
-                    if value not in seen:
-                        seen.add(value)
-                    else:
-                        return False
-        for b in self.get_boxs_as_list():
-            seen = set()
-            for box in b:
-                value = self.board[box]
-                if len(value) == 0:
-                    return False
-                if len(value) == 1:
-                    if value not in seen:
-                        seen.add(value)
-                    else:
-                        return False
-        return True
+            errors += self.check_if_peer_is_valid(col, 'col')
+        for box in self.get_boxs_as_list():
+            errors += self.check_if_peer_is_valid(box, 'box')
+        if errors:
+            raise InvalidBoardException('\n'.join(errors))
+
+    def check_if_peer_is_valid(self, peer: List[str], identifier: str):
+        seen = set()
+        errors = []
+        for box in peer:
+            value = self.board[box]
+            if len(value) == 0:
+                errors.append('{0} does not have any pos'.format(box))
+            if len(value) == 1:
+                if value not in seen:
+                    seen.add(value)
+                else:
+                    errors.append('{0} with {1} is not unique'.format(identifier, box))
+        return errors
 
     def check_if_diagonals_are_uniquely_solved(self):
         for diagonal in [self.left_diagonal, self.right_diagonal]:
@@ -341,12 +329,11 @@ class SudokuSolver(object):
                                                                              unsolved_box))
                 try:
                     new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
-                    new_solver.output_board()
                     new_solver.eliminate()
-                    new_solver.output_board()
                     output = new_solver.brute_force()
-                except InvalidBoardException:
-                    new_solver.logger.info('Invalid board found')
+                except InvalidBoardException as e:
+                    new_solver.logger.info('Invalid board found: ' + e.args[0])
+                    new_solver.output_board()
                     continue
                 if output:
                     self.board = new_solver.board
