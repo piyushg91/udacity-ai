@@ -369,7 +369,7 @@ class SudokuSolver(object):
                 unsolved.append((box, value))
         if len(unsolved) == 0:
             return self.check_if_diagonals_are_uniquely_solved()
-        unsolved.sort(key=lambda x: len(x[1]))
+        unsolved.sort(key=lambda x: (x[0] not in self.left_diagonal and x[0] not in self.right_diagonal, len(x[1])))
         for unsolved_box, unsolved_pos_values in unsolved:
             for unsolved_pos in unsolved_pos_values:
                 new_grid = self.board.copy()
