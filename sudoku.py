@@ -186,8 +186,6 @@ class SudokuSolver(object):
             length = len(self.board[key])
             if length != 1:
                 return False
-            elif length == 0:
-                raise InvalidBoardException
         return True
 
     def do_all_type1_elims(self):
@@ -280,20 +278,20 @@ class SudokuSolver(object):
                 continue
             boxes_to_change = unsolved_boxes - unsolved_map[unsolved_combination]
             if boxes_to_change:
-                found = True
-                self.remove_numbers_from_sequence(unsolved_combination, boxes_to_change, cascade)
+                found = self.remove_numbers_from_sequence(unsolved_combination, boxes_to_change, cascade)
         return found
 
     def remove_numbers_from_sequence(self, to_remove: str, boxes_to_change: Set[str], cascade: bool):
+        found = False
         for box in boxes_to_change:
             current_value = self.board[box]
             for num in to_remove:
                 current_value = current_value.replace(num, '')
-            if current_value == '':
-                raise InvalidBoardException
             self.board[box] = current_value
             if cascade and len(current_value) == 1:
                 self.eliminate_from_peers(current_value, box)
+                found = True
+        return found
 
     def solve_the_puzzle(self):
         self.pre_process()
