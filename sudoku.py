@@ -195,7 +195,8 @@ class SudokuSolver(object):
         a1 = self.do_type_1_elims_with_cols()
         a2 = self.do_type_1_elims_with_row()
         a3 = self.do_type_1_elims_with_box()
-        return a1 or a2 or a3
+        a4 = self.do_type_1_elims_with_diags()
+        return a1 or a2 or a3 or a4
 
     def do_type_1_elims_with_cols(self):
         found_elimination = False
@@ -213,6 +214,12 @@ class SudokuSolver(object):
         found_elimination = False
         for box in self.get_boxs_as_list():
             found_elimination = self.do_type_1_eliminations(box, 'box') or found_elimination
+        return found_elimination
+
+    def do_type_1_elims_with_diags(self):
+        found_elimination = False
+        found_elimination = self.do_type_1_eliminations(list(self.left_diagonal), 'left-diag')or found_elimination
+        found_elimination = self.do_type_1_eliminations(list(self.right_diagonal), 'right-diag')or found_elimination
         return found_elimination
 
     def do_type_1_eliminations(self, group_peer: List[str], identifier: str) -> bool:
@@ -274,6 +281,8 @@ class SudokuSolver(object):
         for unsolved_combination in unsolved_map:
             pair_len = len(unsolved_combination)
             pair_count = len(unsolved_map[unsolved_combination])
+            if pair_count > pair_len:
+                raise InvalidBoardException('Pairs {0} found to have occurred {1} times with {2}'.format(unsolved_combination, pair_count, identifier))
             if pair_count != pair_len:
                 continue
             boxes_to_change = unsolved_boxes - unsolved_map[unsolved_combination]
@@ -287,6 +296,8 @@ class SudokuSolver(object):
             current_value = self.board[box]
             for num in to_remove:
                 current_value = current_value.replace(num, '')
+            if current_value == '':
+                raise InvalidBoardException('{0} is blank'.format(box))
             self.board[box] = current_value
             if cascade and len(current_value) == 1:
                 self.eliminate_from_peers(current_value, box)
@@ -330,16 +341,24 @@ class SudokuSolver(object):
         return errors
 
     def check_if_diagonals_are_uniquely_solved(self):
+        """ Check if its even possible to solve the diagonal as well if they are unique
+        :return:
+        """
         for diagonal in [self.left_diagonal, self.right_diagonal]:
-            seen = set()
+            status = {str(i): 0 for i in range(1, 10)}
             diagonal = list(diagonal)
             for box in diagonal:
                 value = self.board[box]
-                if len(value) > 1:
-                    continue
-                if value in seen:
+                if len(value) == 1 and status[value] > 0:
                     return False
-                seen.add(value)
+                elif len(value) > 1:
+                    for v in value:
+                        status[v] += 1
+                    continue
+                status[value] += 1
+            for i in status:
+                if status[i] == 0:
+                    raise InvalidBoardException('Board is no longer solvable')
         return True
 
     def brute_force(self) -> bool:
@@ -383,5 +402,7 @@ if __name__ == '__main__':
     # print(s.is_solved())
 
     d = SudokuSolver.create_dict_from_str_input('2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3')
+    # d = {'E6': '124789', 'H7': '1234567', 'A7': '2357', 'D9': '124569', 'D1': '146', 'C4': '13589', 'H8': '1257', 'H3': '68', 'D5': '12345689', 'B5': '7', 'G4': '6', 'I9': '125678', 'A8': '8', 'B1': '8', 'A2': '6', 'F2': '124', 'G3': '2', 'B9': '129', 'D4': '1258', 'F5': '12456', 'E5': '168', 'G7': '157', 'B3': '5', 'H9': '12345678', 'F7': '8', 'I1': '17', 'G1': '3', 'H4': '1234578', 'B4': '129', 'E1': '5', 'I5': '1234589', 'G5': '14589', 'H2': '9', 'A3': '1', 'B2': '3', 'E8': '1279', 'I3': '68', 'B6': '6', 'A4': '2345', 'C7': '135', 'I2': '145', 'C3': '4', 'E3': '3', 'B8': '4', 'H6': '1234578', 'D2': '1248', 'H1': '147', 'C1': '2', 'A9': '357', 'E7': '124679', 'C6': '13589', 'F3': '9', 'B7': '129', 'I6': '12345789', 'G6': '145789', 'F4': '157', 'G8': '1579', 'A1': '9', 'E4': '124789', 'F8': '3', 'F1': '146', 'A6': '2345', 'I4': '12345789', 'A5': '2345', 'E2': '1248', 'I8': '12579', 'E9': '124679', 'I7': '12345679', 'G9': '145789', 'D8': '1259', 'C8': '6', 'F6': '1257', 'D7': '124569', 'C2': '7', 'H5': '123458', 'C5': '13589', 'G2': '145', 'D6': '1358', 'F9': '124567', 'C9': '1359', 'D3': '7'}
+    # d = SudokuSolver.create_dict_from_str_input('9.1....8.8.5.7..4.2.4....6...7......5..............83.3..6......9................')
     s = SudokuSolver(d)
     s.solve_the_puzzle()
