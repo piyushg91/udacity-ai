@@ -152,12 +152,21 @@ class SudokuSolver(object):
     def output_board(self):
         self.logger.info("=======")
         width = 1 + max(len(self.board[s]) for s in self.get_all_box_indicies())
-        line = '+'.join(['-' * (width * 3)] * 3)
+        horz_boundary = '+'.join(['-' * (width * 3)] * 3)
+        upper_ind = ''
+        for c in self.cols:
+            sep = ' ' if c in '36' else ''
+            upper_ind += c.center(width) + sep
+        self.logger.info(upper_ind)
+        self.logger.info('-'*(width*9))
         for r in self.rows:
-            self.logger.info(''.join(self.board[r + c].center(width) + ('|' if c in '36' else '')
-                          for c in self.cols))
+            line = ''
+            for c in self.cols:
+                sep = '|' if c in '36' else ''
+                line += self.board[r + c].center(width) + sep
+            self.logger.info(line)
             if r in 'CF':
-                self.logger.info(line)
+                self.logger.info(horz_boundary)
         self.logger.info("=======\n")
 
     @classmethod
