@@ -29,27 +29,43 @@ class SudokuSolver(object):
             box = row + reversed_cols[i]
             self.right_diagonal.add(box)
 
-    def eliminate(self, check_for_singular_values:bool = True):
+    def pre_process(self):
+        """ SHould only be called once at the start
+        :return:
+        """
+        for box in self.board.keys():
+            value = self.board[box]
+            if len(value) == 1:
+                self.eliminate_from_peers(value, box)
+
+    def eliminate(self):
         """Eliminate values from peers using various strategies
 
         Returns:
             Resulting Sudoku in dictionary form after eliminating values.
         """
-        if check_for_singular_values:
-            for box in self.board.keys():
-                value = self.board[box]
-                if len(value) == 1:
-                    self.eliminate_from_peers(value, box)
         self.do_type_1_elims_with_cols()
         self.do_type_1_elims_with_row()
         self.do_type_1_elims_with_box()
+        self.apply_all_naked_pair_elims(cascade=True)
+        if not self.check_if_diagonals_are_uniquely_solved():
+            self.output_board()
+            raise InvalidBoardException('Diagnols not uniquely solved')
+        if self.is_solved() and not self.check_if_board_is_valid():
+            self.output_board()
+            raise InvalidBoardException
 
-    def eliminate_from_peers(self, value, box):
-        self.logger.info('Elimating {0} for {1}'.format(value, box))
+    def eliminate_from_peers(self, value, box, diagonal_elimination:bool=True):
+        self.logger.info('Eliminating {0} for {1}'.format(value, box))
         self.board[box] = value
         self.eliminate_from_row(value, box)
         self.eliminate_from_col(value, box)
         self.eliminate_from_box(value, box)
+        if diagonal_elimination:
+            if box in self.left_diagonal:
+                self.eliminate_from_given_peers(self.left_diagonal, value)
+            if box in self.right_diagonal:
+                self.eliminate_from_given_peers(self.right_diagonal, value)
 
     def eliminate_from_given_peers(self, peers, value_to_remove: str):
         for peer in peers:
@@ -158,8 +174,11 @@ class SudokuSolver(object):
 
     def is_solved(self):
         for key in self.board:
-            if self.board[key].__len__() != 1:
+            length = len(self.board[key])
+            if length != 1:
                 return False
+            elif length == 0:
+                raise InvalidBoardException
         return True
 
     def do_type_1_elims_with_cols(self):
@@ -197,6 +216,8 @@ class SudokuSolver(object):
         self.apply_naked_pair_elims_with_cols(cascade)
         self.apply_naked_pair_elims_with_rows(cascade)
         self.apply_naked_pair_elims_with_boxes(cascade)
+        self.apply_naked_pair_with_select_peers(list(self.left_diagonal), 'left-diaganol', cascade=cascade)
+        self.apply_naked_pair_with_select_peers(list(self.right_diagonal), 'left-diaganol', cascade=cascade)
 
     def apply_naked_pair_elims_with_cols(self, cascade):
         for col in self.get_cols_as_list():
@@ -236,18 +257,58 @@ class SudokuSolver(object):
             current_value = self.board[box]
             for num in to_remove:
                 current_value = current_value.replace(num, '')
+            if current_value == '':
+                raise InvalidBoardException
             self.board[box] = current_value
             if cascade and len(current_value) == 1:
                 self.eliminate_from_peers(current_value, box)
 
     def solve_the_puzzle(self):
-        self.eliminate(check_for_singular_values=True)
+        self.pre_process()
+        self.eliminate()
+        self.output_board()
         result = self.brute_force()
         if result:
             self.logger.info('Successfully solved the puzzle')
             self.output_board()
         else:
             raise Exception('Could not solve puzzle')
+
+    def check_if_board_is_valid(self):
+        for row in self.get_rows_as_list():
+            seen = set()
+            for box in row:
+                value = self.board[box]
+                if len(value) == 0:
+                    return False
+                if len(value) == 1:
+                    if value not in seen:
+                        seen.add(value)
+                    else:
+                        return False
+        for col in self.get_cols_as_list():
+            seen = set()
+            for box in col:
+                value = self.board[box]
+                if len(value) == 0:
+                    return False
+                if len(value) == 1:
+                    if value not in seen:
+                        seen.add(value)
+                    else:
+                        return False
+        for b in self.get_boxs_as_list():
+            seen = set()
+            for box in b:
+                value = self.board[box]
+                if len(value) == 0:
+                    return False
+                if len(value) == 1:
+                    if value not in seen:
+                        seen.add(value)
+                    else:
+                        return False
+        return True
 
     def check_if_diagonals_are_uniquely_solved(self):
         for diagonal in [self.left_diagonal, self.right_diagonal]:
@@ -269,15 +330,24 @@ class SudokuSolver(object):
             if len(value) > 1:
                 unsolved.append((box, value))
         if len(unsolved) == 0:
-            return True
+            return self.check_if_diagonals_are_uniquely_solved()
         unsolved.sort(key=lambda x: len(x[1]))
         for unsolved_box, unsolved_pos_values in unsolved:
             for unsolved_pos in unsolved_pos_values:
                 new_grid = self.board.copy()
-                new_solver = SudokuSolver(new_grid)
-                new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
-                new_solver.eliminate(check_for_singular_values=False)
-                output = new_solver.brute_force()
+                new_solver = SudokuSolver(new_grid, depth=self.depth + 1)
+                new_solver.output_board()
+                new_solver.logger.info('Picking {0} from {1} for {2}'.format(unsolved_pos, unsolved_pos_values,
+                                                                             unsolved_box))
+                try:
+                    new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
+                    new_solver.output_board()
+                    new_solver.eliminate()
+                    new_solver.output_board()
+                    output = new_solver.brute_force()
+                except InvalidBoardException:
+                    new_solver.logger.info('Invalid board found')
+                    continue
                 if output:
                     self.board = new_solver.board
                     return True
@@ -295,6 +365,6 @@ if __name__ == '__main__':
     # s.output_board()
     # print(s.is_solved())
 
-    d = SudokuSolver.create_dict_from_str_input('4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......')
+    d = SudokuSolver.create_dict_from_str_input('2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3')
     s = SudokuSolver(d)
     s.solve_the_puzzle()
