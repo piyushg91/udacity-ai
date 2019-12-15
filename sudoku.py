@@ -260,7 +260,6 @@ class SudokuSolver(object):
             found = self.apply_naked_pair_with_select_peers(box, 'box', cascade) or found
         return found
 
-
     def apply_naked_pair_with_select_peers(self, group_peer: List[str], identifier: str, cascade: bool) -> bool:
         self.logger.info('processsing {0}: {1} for naked pairs'.format(identifier, group_peer[0]))
         found = False
@@ -373,7 +372,6 @@ class SudokuSolver(object):
                     self.board = new_solver.board
                     return True
         return False
-
 
 
 if __name__ == '__main__':
