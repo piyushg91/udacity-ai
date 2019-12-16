@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, List, Set
+from sudoku_utils import SudokuUtils
 
 
 class InvalidBoardException(Exception):
@@ -7,9 +8,6 @@ class InvalidBoardException(Exception):
 
 
 class SudokuSolver(object):
-    rows = 'ABCDEFGHI'
-    cols = '123456789'
-
     def __init__(self, starting_grid: Dict[str, str], depth:int=1):
         self.board = starting_grid
         self.logger = logging.getLogger('Main Logger ' + str(depth))
@@ -20,12 +18,12 @@ class SudokuSolver(object):
         self.set_diagonals()
 
     def set_diagonals(self):
-        for i, row in enumerate(self.rows):
-            box = row + self.cols[i]
+        for i, row in enumerate(SudokuUtils.rows):
+            box = row + SudokuUtils.cols[i]
             self.left_diagonal.add(box)
 
-        reversed_cols = list(reversed(self.cols))
-        for i, row in enumerate(self.rows):
+        reversed_cols = list(reversed(SudokuUtils.cols))
+        for i, row in enumerate(SudokuUtils.rows):
             box = row + reversed_cols[i]
             self.right_diagonal.add(box)
 
@@ -52,11 +50,11 @@ class SudokuSolver(object):
         self.check_if_board_is_solvable_for_all_peers()
 
     def check_if_board_is_solvable_for_all_peers(self):
-        for row in self.get_rows_as_list():
+        for row in SudokuUtils.get_rows_as_list():
             self.check_if_board_is_solvable(row)
-        for col in self.get_cols_as_list():
+        for col in SudokuUtils.get_cols_as_list():
             self.check_if_board_is_solvable(col)
-        for box in self.get_boxs_as_list():
+        for box in SudokuUtils.get_boxs_as_list():
             self.check_if_board_is_solvable(box)
         self.check_if_board_is_solvable(list(self.left_diagonal))
         self.check_if_board_is_solvable(list(self.right_diagonal))
@@ -101,90 +99,30 @@ class SudokuSolver(object):
                     self.eliminate_from_peers(new_value, peer)
 
     def eliminate_from_row(self, value_to_remove: str, target_box: str):
-        row_peers = self.get_row_peers(target_box)
+        row_peers = SudokuUtils.get_row_peers(target_box)
         self.eliminate_from_given_peers(row_peers, value_to_remove)
 
     def eliminate_from_col(self, value_to_remove: str, target_box: str):
-        cols_peers = self.get_col_peers(target_box)
+        cols_peers = SudokuUtils.get_col_peers(target_box)
         self.eliminate_from_given_peers(cols_peers, value_to_remove)
 
     def eliminate_from_box(self, value_to_remove: str, target_box: str):
-        box_peers = self.get_box_peers(target_box)
+        box_peers = SudokuUtils.get_box_peers(target_box)
         self.eliminate_from_given_peers(box_peers, value_to_remove)
-
-    @classmethod
-    def get_col_peers(cls, target_box: str):
-        target_row, target_col = target_box[0], target_box[1]
-        peers = [row + target_col for row in cls.rows if row != target_row]
-        return peers
-
-    @classmethod
-    def get_row_peers(cls, target_box: str):
-        target_row, target_col = target_box[0], target_box[1]
-        peers = [target_row + col for col in cls.cols if col != target_col]
-        return peers
-
-    @classmethod
-    def get_rows_as_list(cls):
-        for row in cls.rows:
-            target = row + '1'
-            row_peers = cls.get_row_peers(target)
-            yield [target] + row_peers
-
-    @classmethod
-    def get_cols_as_list(cls):
-        for col in cls.cols:
-            target = 'A' + col
-            col_peers = cls.get_col_peers(target)
-            yield [target] + col_peers
-
-    @classmethod
-    def get_boxs_as_list(cls):
-        starting = ['A1', 'A4', 'A7', 'D1', 'D4', 'D7', 'G1', 'G4', 'G7']
-        for box_target in starting:
-            peers = cls.get_box_peers(box_target)
-            yield [box_target] + peers
-
-    @classmethod
-    def get_box_peers(cls, target_box: str):
-        row, col = target_box[0], target_box[1]
-        row_index = cls.rows.find(row)
-        col_index = cls.cols.find(col)
-
-        start_row = int(int(row_index)/3) * 3
-        end_row = start_row + 3 # non inclusive
-
-        start_col = int(int(col_index)/3) * 3
-        end_col = start_col + 3
-
-        peers = []
-        for row in range(start_row, end_row):
-            actual_row = cls.rows[row]
-            for col in range(start_col, end_col):
-                actual_col = cls.cols[col]
-                peer = actual_row + actual_col
-                if peer == target_box:
-                    continue
-                peers.append(peer)
-        return peers
-
-    @classmethod
-    def get_all_box_indicies(cls):
-        return [row + col for row in cls.rows for col in cls.cols]
 
     def output_board(self):
         self.logger.info("=======")
-        width = 1 + max(len(self.board[s]) for s in self.get_all_box_indicies())
+        width = 1 + max(len(self.board[s]) for s in SudokuUtils.get_all_box_indicies())
         horz_boundary = '  ' + '+'.join(['-' * (width * 3)] * 3)
         upper_ind = '  '
-        for c in self.cols:
+        for c in SudokuUtils.cols:
             sep = ' ' if c in '36' else ''
             upper_ind += c.center(width) + sep
         self.logger.info(upper_ind)
         self.logger.info('  ' + '-'*(width*9))
-        for r in self.rows:
+        for r in SudokuUtils.rows:
             line = r + ' '
-            for c in self.cols:
+            for c in SudokuUtils.cols:
                 sep = '|' if c in '36' else ''
                 line += self.board[r + c].center(width) + sep
             self.logger.info(line)
@@ -195,7 +133,7 @@ class SudokuSolver(object):
     @classmethod
     def create_dict_from_str_input(cls, str_input: str):
         answer = {}
-        for i, loc in enumerate(cls.get_all_box_indicies()):
+        for i, loc in enumerate(SudokuUtils.get_all_box_indicies()):
             value = str_input[i]
             if value == '.':
                 answer[loc] = '123456789'
@@ -222,19 +160,19 @@ class SudokuSolver(object):
 
     def do_type_1_elims_with_cols(self):
         found_elimination = False
-        for col in self.get_cols_as_list():
+        for col in SudokuUtils.get_cols_as_list():
             found_elimination = self.do_type_1_eliminations(col, 'col') or found_elimination
         return found_elimination
 
     def do_type_1_elims_with_row(self):
         found_elimination = False
-        for row in self.get_rows_as_list():
+        for row in SudokuUtils.get_rows_as_list():
             found_elimination = self.do_type_1_eliminations(row, 'row') or found_elimination
         return found_elimination
 
     def do_type_1_elims_with_box(self):
         found_elimination = False
-        for box in self.get_boxs_as_list():
+        for box in SudokuUtils.get_boxs_as_list():
             found_elimination = self.do_type_1_eliminations(box, 'box') or found_elimination
         return found_elimination
 
@@ -271,19 +209,19 @@ class SudokuSolver(object):
 
     def apply_naked_pair_elims_with_cols(self, cascade):
         found = False
-        for col in self.get_cols_as_list():
+        for col in SudokuUtils.get_cols_as_list():
             found = self.apply_naked_pair_with_select_peers(col, 'col', cascade) or found
         return found
 
     def apply_naked_pair_elims_with_rows(self, cascade):
         found = False
-        for row in self.get_rows_as_list():
+        for row in SudokuUtils.get_rows_as_list():
             found = self.apply_naked_pair_with_select_peers(row, 'row', cascade) or found
         return found
 
     def apply_naked_pair_elims_with_boxes(self, cascade):
         found = False
-        for box in self.get_boxs_as_list():
+        for box in SudokuUtils.get_boxs_as_list():
             found = self.apply_naked_pair_with_select_peers(box, 'box', cascade) or found
         return found
 
@@ -342,7 +280,7 @@ class SudokuSolver(object):
         self.base_eliminate()
         self.output_board()
         unsolved_diagonals = []
-        for box in self.get_all_box_indicies():
+        for box in SudokuUtils.get_all_box_indicies():
             if box in self.left_diagonal or box in self.right_diagonal:
                 value = self.board[box]
                 if len(value) > 1:
@@ -423,10 +361,9 @@ class SudokuSolver(object):
                     new_solver.output_board()
                     continue
 
-
     def brute_force(self) -> bool:
         unsolved = []
-        for box in self.get_all_box_indicies():
+        for box in SudokuUtils.get_all_box_indicies():
             value = self.board[box]
             if len(value) > 1:
                 unsolved.append((box, value))
