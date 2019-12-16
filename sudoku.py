@@ -49,11 +49,33 @@ class SudokuSolver(object):
         if found_type1 or found_naked_pairs:
             self.logger.info('Redoing base elimination')
             self.base_eliminate()
-        if not self.check_if_diagonals_are_uniquely_solved():
-            self.output_board()
-            raise InvalidBoardException('Diagonals not uniquely solved')
-        if self.is_solved() and not self.check_if_board_is_valid():
-            self.check_if_board_is_valid()
+        self.check_if_board_is_solvable_for_all_peers()
+
+    def check_if_board_is_solvable_for_all_peers(self):
+        for row in self.get_rows_as_list():
+            self.check_if_board_is_solvable(row)
+        for col in self.get_cols_as_list():
+            self.check_if_board_is_solvable(col)
+        for box in self.get_boxs_as_list():
+            self.check_if_board_is_solvable(box)
+        self.check_if_board_is_solvable(list(self.left_diagonal))
+        self.check_if_board_is_solvable(list(self.right_diagonal))
+
+    def check_if_board_is_solvable(self, group_peers: List[str]):
+        status = {str(i): 0 for i in range(1, 10)}
+        for peer in group_peers:
+            value = self.board[peer]
+            if len(value) == 1 and status[value] > 0:
+                raise InvalidBoardException('Board unsolvable due to ' + peer)
+            elif len(value) > 1:
+                for v in value:
+                    status[v] += 1
+                continue
+            status[value] += 1
+        for i in status:
+            if status[i] == 0:
+                raise InvalidBoardException('Board no longer solvable')
+        return
 
     def eliminate_from_peers(self, value, box, diagonal_elimination:bool=True):
         self.logger.info('Eliminating {0} for {1}'.format(value, box))
@@ -315,6 +337,21 @@ class SudokuSolver(object):
         else:
             raise Exception('Could not solve puzzle')
 
+    def solve_puzzle_2(self):
+        self.pre_process()
+        self.base_eliminate()
+        self.output_board()
+        unsolved_diagonals = []
+        for box in self.get_all_box_indicies():
+            if box in self.left_diagonal or box in self.right_diagonal:
+                value = self.board[box]
+                if len(value) > 1:
+                    unsolved_diagonals.append(box)
+        unsolved_diagonals.sort(key=lambda x: len(self.board[x]))
+        for i in self.yield_board_with_solved_diagonals(unsolved_diagonals, 0):
+            self.logger.info('Found valid board')
+            i.output_board()
+
     def check_if_board_is_valid(self):
         errors = []
         for row in self.get_rows_as_list():
@@ -361,6 +398,32 @@ class SudokuSolver(object):
                     raise InvalidBoardException('Board is no longer solvable')
         return True
 
+    def yield_board_with_solved_diagonals(self, unsolved_diagonals: List[str], start_index):
+        for i in range(start_index, len(unsolved_diagonals)):
+            unsolved_box = unsolved_diagonals[i]
+            unsolved_pos_values = self.board[unsolved_box]
+            if unsolved_pos_values.__len__() == 1:
+                self.logger.info('{0} is already solved'.format(unsolved_box))
+                continue
+            for unsolved_pos in unsolved_pos_values:
+                new_board = self.board.copy()
+                new_solver = SudokuSolver(new_board, depth=self.depth + 1)
+                new_solver.output_board()
+                new_solver.logger.info('Picking {0} from {1} for {2}'.format(unsolved_pos, unsolved_pos_values,
+                                                                             unsolved_box))
+                try:
+                    new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
+                    new_solver.base_eliminate()
+                    new_solver.output_board()
+                    new_index = start_index + 1
+                    for correct_board in new_solver.yield_board_with_solved_diagonals(unsolved_diagonals, new_index):
+                        yield correct_board
+                except InvalidBoardException as e:
+                    new_solver.logger.info('Invalid board found: ' + e.args[0])
+                    new_solver.output_board()
+                    continue
+
+
     def brute_force(self) -> bool:
         unsolved = []
         for box in self.get_all_box_indicies():
@@ -375,6 +438,8 @@ class SudokuSolver(object):
                 new_grid = self.board.copy()
                 new_solver = SudokuSolver(new_grid, depth=self.depth + 1)
                 new_solver.output_board()
+                if new_solver.depth == 11 and unsolved_pos == '7' and unsolved_pos_values == '47' and unsolved_box == 'G8':
+                    print('')
                 new_solver.logger.info('Picking {0} from {1} for {2}'.format(unsolved_pos, unsolved_pos_values,
                                                                              unsolved_box))
                 try:
@@ -401,8 +466,11 @@ if __name__ == '__main__':
     # s.output_board()
     # print(s.is_solved())
 
-    d = SudokuSolver.create_dict_from_str_input('2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3')
+    # d = SudokuSolver.create_dict_from_str_input('2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3')
     # d = {'E6': '124789', 'H7': '1234567', 'A7': '2357', 'D9': '124569', 'D1': '146', 'C4': '13589', 'H8': '1257', 'H3': '68', 'D5': '12345689', 'B5': '7', 'G4': '6', 'I9': '125678', 'A8': '8', 'B1': '8', 'A2': '6', 'F2': '124', 'G3': '2', 'B9': '129', 'D4': '1258', 'F5': '12456', 'E5': '168', 'G7': '157', 'B3': '5', 'H9': '12345678', 'F7': '8', 'I1': '17', 'G1': '3', 'H4': '1234578', 'B4': '129', 'E1': '5', 'I5': '1234589', 'G5': '14589', 'H2': '9', 'A3': '1', 'B2': '3', 'E8': '1279', 'I3': '68', 'B6': '6', 'A4': '2345', 'C7': '135', 'I2': '145', 'C3': '4', 'E3': '3', 'B8': '4', 'H6': '1234578', 'D2': '1248', 'H1': '147', 'C1': '2', 'A9': '357', 'E7': '124679', 'C6': '13589', 'F3': '9', 'B7': '129', 'I6': '12345789', 'G6': '145789', 'F4': '157', 'G8': '1579', 'A1': '9', 'E4': '124789', 'F8': '3', 'F1': '146', 'A6': '2345', 'I4': '12345789', 'A5': '2345', 'E2': '1248', 'I8': '12579', 'E9': '124679', 'I7': '12345679', 'G9': '145789', 'D8': '1259', 'C8': '6', 'F6': '1257', 'D7': '124569', 'C2': '7', 'H5': '123458', 'C5': '13589', 'G2': '145', 'D6': '1358', 'F9': '124567', 'C9': '1359', 'D3': '7'}
     # d = SudokuSolver.create_dict_from_str_input('9.1....8.8.5.7..4.2.4....6...7......5..............83.3..6......9................')
+    # d = SudokuSolver.create_dict_from_str_input('...7.9....85...31.2......7...........1..7.6......8...7.7.........3......85.......')
+    d = SudokuSolver.create_dict_from_str_input('6.5.3.4.....59.......16...5........1...3......7.6859......53....5............6.5.')
     s = SudokuSolver(d)
-    s.solve_the_puzzle()
+    s.output_board()
+    s.solve_puzzle_2()
