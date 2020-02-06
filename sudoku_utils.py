@@ -1,29 +1,23 @@
+from typing import Dict, Set
+
+
+rows = 'ABCDEFGHI'
+cols = '123456789'
+def cross(A, B):
+    "Cross product of elements in A and elements in B."
+    return [a + b for a in A for b in B]
+
 
 
 class SudokuUtils(object):
     rows = 'ABCDEFGHI'
     cols = '123456789'
-
-    @classmethod
-    def get_rows_as_list(cls):
-        for row in cls.rows:
-            target = row + '1'
-            row_peers = cls.get_row_peers(target)
-            yield [target] + row_peers
-
-    @classmethod
-    def get_cols_as_list(cls):
-        for col in cls.cols:
-            target = 'A' + col
-            col_peers = cls.get_col_peers(target)
-            yield [target] + col_peers
-
-    @classmethod
-    def get_boxs_as_list(cls):
-        starting = ['A1', 'A4', 'A7', 'D1', 'D4', 'D7', 'G1', 'G4', 'G7']
-        for box_target in starting:
-            peers = cls.get_box_peers(box_target)
-            yield [box_target] + peers
+    all_rows = [cross(r, cols) for r in rows]
+    all_cols = [cross(rows, c) for c in cols]
+    all_boxes = [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')]
+    def __init__(self):
+        units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
+        peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
 
     @classmethod
     def get_col_peers(cls, target_box: str):
@@ -63,3 +57,14 @@ class SudokuUtils(object):
     @classmethod
     def get_all_box_indicies(cls):
         return [row + col for row in cls.rows for col in cls.cols]
+
+    @classmethod
+    def get_peers_map(cls) -> Dict[str, Set[str]]:
+        global_peers = {}
+        for box in cls.get_all_box_indicies():
+            row = set(cls.get_row_peers(box))
+            col = set(cls.get_col_peers(box))
+            box_peers = set(cls.get_box_peers(box))
+            all_peers = row.union(col).union(box_peers)
+            global_peers[box] = all_peers
+        return global_peers

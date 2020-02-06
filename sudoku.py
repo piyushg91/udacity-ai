@@ -7,7 +7,13 @@ class InvalidBoardException(Exception):
     pass
 
 
+class UdacityException(Exception):
+    pass
+
+
 class SudokuSolver(object):
+    peer_map = SudokuUtils.get_peers_map()
+
     def __init__(self, starting_grid: Dict[str, str], depth:int=1):
         self.board = starting_grid
         self.logger = logging.getLogger('Main Logger ' + str(depth))
@@ -16,6 +22,9 @@ class SudokuSolver(object):
         self.left_diagonal = set()
         self.right_diagonal = set()
         self.set_diagonals()
+        print(depth)
+        # # if depth > 11:
+        #     raise TimeoutError
 
     def set_diagonals(self):
         for i, row in enumerate(SudokuUtils.rows):
@@ -50,11 +59,11 @@ class SudokuSolver(object):
         self.check_if_board_is_solvable_for_all_peers()
 
     def check_if_board_is_solvable_for_all_peers(self):
-        for row in SudokuUtils.get_rows_as_list():
+        for row in SudokuUtils.all_rows:
             self.check_if_board_is_solvable(row)
-        for col in SudokuUtils.get_cols_as_list():
+        for col in SudokuUtils.all_cols:
             self.check_if_board_is_solvable(col)
-        for box in SudokuUtils.get_boxs_as_list():
+        for box in SudokuUtils.all_boxes:
             self.check_if_board_is_solvable(box)
         self.check_if_board_is_solvable(list(self.left_diagonal))
         self.check_if_board_is_solvable(list(self.right_diagonal))
@@ -78,9 +87,7 @@ class SudokuSolver(object):
     def eliminate_from_peers(self, value, box, diagonal_elimination:bool=True):
         self.logger.info('Eliminating {0} for {1}'.format(value, box))
         self.board[box] = value
-        self.eliminate_from_row(value, box)
-        self.eliminate_from_col(value, box)
-        self.eliminate_from_box(value, box)
+        self.eliminate_from_given_peers(self.peer_map[box], value)
         if diagonal_elimination:
             if box in self.left_diagonal:
                 self.eliminate_from_given_peers(self.left_diagonal, value)
@@ -97,18 +104,6 @@ class SudokuSolver(object):
                 self.board[peer] = new_value
                 if new_value.__len__() == 1:
                     self.eliminate_from_peers(new_value, peer)
-
-    def eliminate_from_row(self, value_to_remove: str, target_box: str):
-        row_peers = SudokuUtils.get_row_peers(target_box)
-        self.eliminate_from_given_peers(row_peers, value_to_remove)
-
-    def eliminate_from_col(self, value_to_remove: str, target_box: str):
-        cols_peers = SudokuUtils.get_col_peers(target_box)
-        self.eliminate_from_given_peers(cols_peers, value_to_remove)
-
-    def eliminate_from_box(self, value_to_remove: str, target_box: str):
-        box_peers = SudokuUtils.get_box_peers(target_box)
-        self.eliminate_from_given_peers(box_peers, value_to_remove)
 
     def output_board(self):
         self.logger.info("=======")
@@ -160,19 +155,19 @@ class SudokuSolver(object):
 
     def do_type_1_elims_with_cols(self):
         found_elimination = False
-        for col in SudokuUtils.get_cols_as_list():
+        for col in SudokuUtils.all_cols:
             found_elimination = self.do_type_1_eliminations(col, 'col') or found_elimination
         return found_elimination
 
     def do_type_1_elims_with_row(self):
         found_elimination = False
-        for row in SudokuUtils.get_rows_as_list():
+        for row in SudokuUtils.all_rows:
             found_elimination = self.do_type_1_eliminations(row, 'row') or found_elimination
         return found_elimination
 
     def do_type_1_elims_with_box(self):
         found_elimination = False
-        for box in SudokuUtils.get_boxs_as_list():
+        for box in SudokuUtils.all_boxes:
             found_elimination = self.do_type_1_eliminations(box, 'box') or found_elimination
         return found_elimination
 
@@ -209,19 +204,19 @@ class SudokuSolver(object):
 
     def apply_naked_pair_elims_with_cols(self, cascade):
         found = False
-        for col in SudokuUtils.get_cols_as_list():
+        for col in SudokuUtils.all_cols:
             found = self.apply_naked_pair_with_select_peers(col, 'col', cascade) or found
         return found
 
     def apply_naked_pair_elims_with_rows(self, cascade):
         found = False
-        for row in SudokuUtils.get_rows_as_list():
+        for row in SudokuUtils.all_rows:
             found = self.apply_naked_pair_with_select_peers(row, 'row', cascade) or found
         return found
 
     def apply_naked_pair_elims_with_boxes(self, cascade):
         found = False
-        for box in SudokuUtils.get_boxs_as_list():
+        for box in SudokuUtils.all_boxes:
             found = self.apply_naked_pair_with_select_peers(box, 'box', cascade) or found
         return found
 
