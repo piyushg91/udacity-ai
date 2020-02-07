@@ -370,24 +370,24 @@ class SudokuSolver(object):
         if len(unsolved) == 0:
             return self.check_if_diagonals_are_uniquely_solved()
         unsolved.sort(key=lambda x: (x[0] not in self.left_diagonal and x[0] not in self.right_diagonal, len(x[1])))
-        for unsolved_box, unsolved_pos_values in unsolved:
-            for unsolved_pos in unsolved_pos_values:
-                new_grid = self.board.copy()
-                new_solver = SudokuSolver(new_grid, depth=self.depth + 1)
+        unsolved_box, unsolved_pos_values = unsolved[0]
+        for unsolved_pos in unsolved_pos_values:
+            new_grid = self.board.copy()
+            new_solver = SudokuSolver(new_grid, depth=self.depth + 1)
+            new_solver.output_board()
+            if new_solver.depth == 11 and unsolved_pos == '7' and unsolved_pos_values == '47' and unsolved_box == 'G8':
+                print('')
+            new_solver.logger.info('Picking {0} from {1} for {2}'.format(unsolved_pos, unsolved_pos_values,
+                                                                         unsolved_box))
+            try:
+                new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
+                new_solver.base_eliminate()
+                output = new_solver.brute_force()
+            except InvalidBoardException as e:
+                new_solver.logger.info('Invalid board found: ' + e.args[0])
                 new_solver.output_board()
-                if new_solver.depth == 11 and unsolved_pos == '7' and unsolved_pos_values == '47' and unsolved_box == 'G8':
-                    print('')
-                new_solver.logger.info('Picking {0} from {1} for {2}'.format(unsolved_pos, unsolved_pos_values,
-                                                                             unsolved_box))
-                try:
-                    new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
-                    new_solver.base_eliminate()
-                    output = new_solver.brute_force()
-                except InvalidBoardException as e:
-                    new_solver.logger.info('Invalid board found: ' + e.args[0])
-                    new_solver.output_board()
-                    continue
-                if output:
-                    self.board = new_solver.board
-                    return True
+                continue
+            if output:
+                self.board = new_solver.board
+                return True
         return False
