@@ -1,13 +1,9 @@
 import logging
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Set
 from sudoku_utils import SudokuUtils
 
 
 class InvalidBoardException(Exception):
-    pass
-
-
-class UdacityException(Exception):
     pass
 
 
