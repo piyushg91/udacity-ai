@@ -81,6 +81,7 @@ class SudokuSolver(object):
         for peer in group_peers:
             value = self.board[peer]
             if len(value) == 1 and status[value] > 0:
+                self.output_board()
                 raise InvalidBoardException('Board unsolvable due to ' + peer)
             elif len(value) > 1:
                 for v in value:
@@ -291,61 +292,15 @@ class SudokuSolver(object):
                     errors.append('{0} with {1} is not unique'.format(identifier, box))
         return errors
 
-    def check_if_diagonals_are_uniquely_solved(self):
-        """ Check if its even possible to solve the diagonal as well if they are unique
-        :return:
-        """
-        for diagonal in [self.left_diagonal, self.right_diagonal]:
-            status = {str(i): 0 for i in range(1, 10)}
-            diagonal = list(diagonal)
-            for box in diagonal:
-                value = self.board[box]
-                if len(value) == 1 and status[value] > 0:
-                    return False
-                elif len(value) > 1:
-                    for v in value:
-                        status[v] += 1
-                    continue
-                status[value] += 1
-            for i in status:
-                if status[i] == 0:
-                    raise InvalidBoardException('Board is no longer solvable')
-        return True
-
-    def yield_board_with_solved_diagonals(self, unsolved_diagonals: List[str], start_index):
-        for i in range(start_index, len(unsolved_diagonals)):
-            unsolved_box = unsolved_diagonals[i]
-            unsolved_pos_values = self.board[unsolved_box]
-            if unsolved_pos_values.__len__() == 1:
-                self.logger.info('{0} is already solved'.format(unsolved_box))
-                continue
-            for unsolved_pos in unsolved_pos_values:
-                new_board = self.board.copy()
-                new_solver = SudokuSolver(new_board, depth=self.depth + 1)
-                new_solver.output_board()
-                new_solver.logger.info('Picking {0} from {1} for {2}'.format(unsolved_pos, unsolved_pos_values,
-                                                                             unsolved_box))
-                try:
-                    new_solver.eliminate_from_peers(unsolved_pos, unsolved_box)
-                    new_solver.base_eliminate()
-                    new_solver.output_board()
-                    new_index = start_index + 1
-                    for correct_board in new_solver.yield_board_with_solved_diagonals(unsolved_diagonals, new_index):
-                        yield correct_board
-                except InvalidBoardException as e:
-                    new_solver.logger.info('Invalid board found: ' + e.args[0])
-                    new_solver.output_board()
-                    continue
-
     def brute_force(self) -> bool:
         unsolved = []
         for box in SudokuUtils.get_all_box_indicies():
             value = self.board[box]
             if len(value) > 1:
                 unsolved.append((box, value))
-        if len(unsolved) == 0:
-            return self.check_if_diagonals_are_uniquely_solved()
         unsolved.sort(key=lambda x: (x[0] not in self.left_diagonal and x[0] not in self.right_diagonal, len(x[1])))
+        if not unsolved:
+            return True
         unsolved_box, unsolved_pos_values = unsolved[0]
         for unsolved_pos in unsolved_pos_values:
             new_grid = self.board.copy()
