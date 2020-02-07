@@ -34,8 +34,8 @@ class SudokuSolver(object):
             box = row + reversed_cols[i]
             self.right_diagonal.add(box)
 
-    def pre_process(self):
-        """ SHould only be called once at the start
+    def eliminate_singular_values_peers(self):
+        """ If we find a box that's already solved, eliminate from its peers
         :return:
         """
         for box in self.board.keys():
@@ -59,7 +59,7 @@ class SudokuSolver(object):
         stalled = False
         while not stalled:
             pre_elimination_count = self.get_solved_count()
-            self.pre_process()
+            self.eliminate_singular_values_peers()
             self.do_all_type1_elims()
             self.apply_all_naked_pair_elims(cascade=True)
             post_elimination_count = self.get_solved_count()
