@@ -146,40 +146,29 @@ class SudokuSolver(object):
 
     def do_all_type1_elims(self):
         """
-        :return:  Will return 2 if there was an elimination
         """
-        a1 = self.do_type_1_elims_with_cols()
-        a2 = self.do_type_1_elims_with_row()
-        a3 = self.do_type_1_elims_with_box()
-        a4 = self.do_type_1_elims_with_diags()
-        return a1 or a2 or a3 or a4
+        self.do_type_1_elims_with_cols()
+        self.do_type_1_elims_with_row()
+        self.do_type_1_elims_with_box()
+        self.do_type_1_elims_with_diags()
 
     def do_type_1_elims_with_cols(self):
-        found_elimination = False
         for col in SudokuUtils.all_cols:
-            found_elimination = self.do_type_1_eliminations(col, 'col') or found_elimination
-        return found_elimination
+            self.do_type_1_eliminations(col, 'col')
 
     def do_type_1_elims_with_row(self):
-        found_elimination = False
         for row in SudokuUtils.all_rows:
-            found_elimination = self.do_type_1_eliminations(row, 'row') or found_elimination
-        return found_elimination
+            self.do_type_1_eliminations(row, 'row')
 
     def do_type_1_elims_with_box(self):
-        found_elimination = False
         for box in SudokuUtils.all_boxes:
-            found_elimination = self.do_type_1_eliminations(box, 'box') or found_elimination
-        return found_elimination
+            self.do_type_1_eliminations(box, 'box')
 
     def do_type_1_elims_with_diags(self):
-        found_elimination = False
-        found_elimination = self.do_type_1_eliminations(list(self.left_diagonal), 'left-diag')or found_elimination
-        found_elimination = self.do_type_1_eliminations(list(self.right_diagonal), 'right-diag')or found_elimination
-        return found_elimination
+        self.do_type_1_eliminations(list(self.left_diagonal), 'left-diag')
+        self.do_type_1_eliminations(list(self.right_diagonal), 'right-diag')
 
-    def do_type_1_eliminations(self, group_peer: List[str], identifier: str) -> bool:
-        found_elimination = False
+    def do_type_1_eliminations(self, group_peer: List[str], identifier: str):
         count_map = {str(i): [] for i in range(1, 10)}
         for box in group_peer:
             value = self.board[box]
@@ -192,38 +181,28 @@ class SudokuSolver(object):
                 box = boxes_found[0]
                 self.logger.info('Type 1 elimination for {0}: {1} with value {2}'.format(identifier, box, key))
                 self.eliminate_from_peers(key, box)
-                found_elimination = True
-        return found_elimination
 
     def apply_all_naked_pair_elims(self, cascade:bool=True):
-        a1 = self.apply_naked_pair_elims_with_cols(cascade)
-        a2 = self.apply_naked_pair_elims_with_rows(cascade)
-        a3 = self.apply_naked_pair_elims_with_boxes(cascade)
-        a4 = self.apply_naked_pair_with_select_peers(list(self.left_diagonal), 'left-diaganol', cascade=cascade)
-        a5 = self.apply_naked_pair_with_select_peers(list(self.right_diagonal), 'left-diaganol', cascade=cascade)
-        return a1 or a2 or a3 or a4 or a5
+        self.apply_naked_pair_elims_with_cols(cascade)
+        self.apply_naked_pair_elims_with_rows(cascade)
+        self.apply_naked_pair_elims_with_boxes(cascade)
+        self.apply_naked_pair_with_select_peers(list(self.left_diagonal), 'left-diaganol', cascade=cascade)
+        self.apply_naked_pair_with_select_peers(list(self.right_diagonal), 'left-diaganol', cascade=cascade)
 
     def apply_naked_pair_elims_with_cols(self, cascade):
-        found = False
         for col in SudokuUtils.all_cols:
-            found = self.apply_naked_pair_with_select_peers(col, 'col', cascade) or found
-        return found
+            self.apply_naked_pair_with_select_peers(col, 'col', cascade)
 
     def apply_naked_pair_elims_with_rows(self, cascade):
-        found = False
         for row in SudokuUtils.all_rows:
-            found = self.apply_naked_pair_with_select_peers(row, 'row', cascade) or found
-        return found
+            self.apply_naked_pair_with_select_peers(row, 'row', cascade)
 
     def apply_naked_pair_elims_with_boxes(self, cascade):
-        found = False
         for box in SudokuUtils.all_boxes:
-            found = self.apply_naked_pair_with_select_peers(box, 'box', cascade) or found
-        return found
+            self.apply_naked_pair_with_select_peers(box, 'box', cascade)
 
     def apply_naked_pair_with_select_peers(self, group_peer: List[str], identifier: str, cascade: bool) -> bool:
         self.logger.info('processsing {0}: {1} for naked pairs'.format(identifier, group_peer[0]))
-        found = False
         unsolved_map = {}
         unsolved_boxes = set()
         for box in group_peer:
@@ -243,11 +222,9 @@ class SudokuSolver(object):
                 continue
             boxes_to_change = unsolved_boxes - unsolved_map[unsolved_combination]
             if boxes_to_change:
-                found = self.remove_numbers_from_sequence(unsolved_combination, boxes_to_change, cascade)
-        return found
+                self.remove_numbers_from_sequence(unsolved_combination, boxes_to_change, cascade)
 
     def remove_numbers_from_sequence(self, to_remove: str, boxes_to_change: Set[str], cascade: bool):
-        found = False
         for box in boxes_to_change:
             current_value = self.board[box]
             for num in to_remove:
@@ -257,8 +234,6 @@ class SudokuSolver(object):
             self.board[box] = current_value
             if cascade and len(current_value) == 1:
                 self.eliminate_from_peers(current_value, box)
-                found = True
-        return found
 
     def solve_the_puzzle(self):
         self.base_eliminate()
