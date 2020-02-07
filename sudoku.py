@@ -22,7 +22,6 @@ class SudokuSolver(object):
         self.left_diagonal = set()
         self.right_diagonal = set()
         self.set_diagonals()
-        print(depth)
 
     def set_diagonals(self):
         for i, row in enumerate(SudokuUtils.rows):
@@ -144,13 +143,6 @@ class SudokuSolver(object):
             else:
                 answer[loc] = value
         return answer
-
-    def is_solved(self):
-        for key in self.board:
-            length = len(self.board[key])
-            if length != 1:
-                return False
-        return True
 
     def do_all_type1_elims(self):
         """
@@ -277,20 +269,6 @@ class SudokuSolver(object):
             self.output_board()
         else:
             raise Exception('Could not solve puzzle')
-
-    def check_if_peer_is_valid(self, peer: List[str], identifier: str):
-        seen = set()
-        errors = []
-        for box in peer:
-            value = self.board[box]
-            if len(value) == 0:
-                errors.append('{0} does not have any pos'.format(box))
-            if len(value) == 1:
-                if value not in seen:
-                    seen.add(value)
-                else:
-                    errors.append('{0} with {1} is not unique'.format(identifier, box))
-        return errors
 
     def brute_force(self) -> bool:
         unsolved = []
