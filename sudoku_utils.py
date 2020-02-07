@@ -15,9 +15,9 @@ class SudokuUtils(object):
     all_rows = [cross(r, cols) for r in rows]
     all_cols = [cross(rows, c) for c in cols]
     all_boxes = [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')]
+
     def __init__(self):
-        units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
-        peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
+        pass
 
     @classmethod
     def get_col_peers(cls, target_box: str):

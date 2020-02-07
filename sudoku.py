@@ -14,7 +14,7 @@ class UdacityException(Exception):
 class SudokuSolver(object):
     peer_map = SudokuUtils.get_peers_map()
 
-    def __init__(self, starting_grid: Dict[str, str], depth:int=1):
+    def __init__(self, starting_grid: Dict[str, str], depth: int=1):
         self.board = starting_grid
         self.logger = logging.getLogger('Main Logger ' + str(depth))
         self.depth = depth
@@ -23,8 +23,6 @@ class SudokuSolver(object):
         self.right_diagonal = set()
         self.set_diagonals()
         print(depth)
-        # # if depth > 11:
-        #     raise TimeoutError
 
     def set_diagonals(self):
         for i, row in enumerate(SudokuUtils.rows):
@@ -45,17 +43,27 @@ class SudokuSolver(object):
             if len(value) == 1:
                 self.eliminate_from_peers(value, box)
 
+    def get_solved_count(self):
+        count = 0
+        for key in self.board:
+            if self.board[key].__len__() == 1:
+                count += 1
+        return count
+
     def base_eliminate(self):
         """Eliminate values from peers using various strategies
 
         Returns:
             Resulting Sudoku in dictionary form after eliminating values.
         """
-        found_type1 = self.do_all_type1_elims()
-        found_naked_pairs = self.apply_all_naked_pair_elims(cascade=True)
-        if found_type1 or found_naked_pairs:
-            self.logger.info('Redoing base elimination')
-            self.base_eliminate()
+        stalled = False
+        while not stalled:
+            pre_elimination_count = self.get_solved_count()
+            self.pre_process()
+            self.do_all_type1_elims()
+            self.apply_all_naked_pair_elims(cascade=True)
+            post_elimination_count = self.get_solved_count()
+            stalled = pre_elimination_count == post_elimination_count
         self.check_if_board_is_solvable_for_all_peers()
 
     def check_if_board_is_solvable_for_all_peers(self):
@@ -260,7 +268,6 @@ class SudokuSolver(object):
         return found
 
     def solve_the_puzzle(self):
-        self.pre_process()
         self.base_eliminate()
         self.output_board()
         result = self.brute_force()
