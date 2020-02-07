@@ -3,6 +3,8 @@ from typing import Dict, Set
 
 rows = 'ABCDEFGHI'
 cols = '123456789'
+reversed_cols = list(reversed(cols))
+
 def cross(A, B):
     "Cross product of elements in A and elements in B."
     return [a + b for a in A for b in B]
@@ -15,6 +17,8 @@ class SudokuUtils(object):
     all_rows = [cross(r, cols) for r in rows]
     all_cols = [cross(rows, c) for c in cols]
     all_boxes = [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')]
+    left_diagonal = {row + cols[i]for i, row in enumerate(rows)}
+    right_diagonal = {row + reversed_cols[i] for i, row in enumerate(rows)}
 
     def __init__(self):
         pass
@@ -66,5 +70,9 @@ class SudokuUtils(object):
             col = set(cls.get_col_peers(box))
             box_peers = set(cls.get_box_peers(box))
             all_peers = row.union(col).union(box_peers)
+            if box in cls.left_diagonal:
+                all_peers = all_peers.union(cls.left_diagonal)
+            if box in cls.right_diagonal:
+                all_peers = all_peers.union(cls.right_diagonal)
             global_peers[box] = all_peers
         return global_peers

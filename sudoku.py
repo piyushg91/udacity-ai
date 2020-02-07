@@ -19,19 +19,6 @@ class SudokuSolver(object):
         self.logger = logging.getLogger('Main Logger ' + str(depth))
         self.depth = depth
         self.logger.info('Instantiated with depth ' + str(self.depth))
-        self.left_diagonal = set()
-        self.right_diagonal = set()
-        self.set_diagonals()
-
-    def set_diagonals(self):
-        for i, row in enumerate(SudokuUtils.rows):
-            box = row + SudokuUtils.cols[i]
-            self.left_diagonal.add(box)
-
-        reversed_cols = list(reversed(SudokuUtils.cols))
-        for i, row in enumerate(SudokuUtils.rows):
-            box = row + reversed_cols[i]
-            self.right_diagonal.add(box)
 
     def eliminate_singular_values_peers(self):
         """ If we find a box that's already solved, eliminate from its peers
@@ -72,8 +59,8 @@ class SudokuSolver(object):
             self.check_if_board_is_solvable(col)
         for box in SudokuUtils.all_boxes:
             self.check_if_board_is_solvable(box)
-        self.check_if_board_is_solvable(list(self.left_diagonal))
-        self.check_if_board_is_solvable(list(self.right_diagonal))
+        self.check_if_board_is_solvable(list(SudokuUtils.left_diagonal))
+        self.check_if_board_is_solvable(list(SudokuUtils.right_diagonal))
 
     def check_if_board_is_solvable(self, group_peers: List[str]):
         status = {str(i): 0 for i in range(1, 10)}
@@ -92,15 +79,10 @@ class SudokuSolver(object):
                 raise InvalidBoardException('Board no longer solvable')
         return
 
-    def eliminate_from_peers(self, value, box, diagonal_elimination:bool=True):
+    def eliminate_from_peers(self, value, box):
         self.logger.info('Eliminating {0} for {1}'.format(value, box))
         self.board[box] = value
         self.eliminate_from_given_peers(self.peer_map[box], value)
-        if diagonal_elimination:
-            if box in self.left_diagonal:
-                self.eliminate_from_given_peers(self.left_diagonal, value)
-            if box in self.right_diagonal:
-                self.eliminate_from_given_peers(self.right_diagonal, value)
 
     def eliminate_from_given_peers(self, peers, value_to_remove: str):
         for peer in peers:
@@ -165,8 +147,8 @@ class SudokuSolver(object):
             self.do_type_1_eliminations(box, 'box')
 
     def do_type_1_elims_with_diags(self):
-        self.do_type_1_eliminations(list(self.left_diagonal), 'left-diag')
-        self.do_type_1_eliminations(list(self.right_diagonal), 'right-diag')
+        self.do_type_1_eliminations(list(SudokuUtils.left_diagonal), 'left-diag')
+        self.do_type_1_eliminations(list(SudokuUtils.right_diagonal), 'right-diag')
 
     def do_type_1_eliminations(self, group_peer: List[str], identifier: str):
         count_map = {str(i): [] for i in range(1, 10)}
@@ -186,8 +168,8 @@ class SudokuSolver(object):
         self.apply_naked_pair_elims_with_cols()
         self.apply_naked_pair_elims_with_rows()
         self.apply_naked_pair_elims_with_boxes()
-        self.apply_naked_pair_with_select_peers(list(self.left_diagonal), 'left-diaganol')
-        self.apply_naked_pair_with_select_peers(list(self.right_diagonal), 'left-diaganol')
+        self.apply_naked_pair_with_select_peers(list(SudokuUtils.left_diagonal), 'left-diaganol')
+        self.apply_naked_pair_with_select_peers(list(SudokuUtils.right_diagonal), 'left-diaganol')
 
     def apply_naked_pair_elims_with_cols(self):
         for col in SudokuUtils.all_cols:
@@ -249,7 +231,7 @@ class SudokuSolver(object):
             value = self.board[box]
             if len(value) > 1:
                 unsolved.append((box, value))
-        unsolved.sort(key=lambda x: (x[0] not in self.left_diagonal and x[0] not in self.right_diagonal, len(x[1])))
+        unsolved.sort(key=lambda x: (x[0] not in SudokuUtils.left_diagonal and x[0] not in SudokuUtils.right_diagonal, len(x[1])))
         if not unsolved:
             return True
         unsolved_box, unsolved_pos_values = unsolved[0]
