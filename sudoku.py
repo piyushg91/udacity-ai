@@ -60,7 +60,7 @@ class SudokuSolver(object):
             pre_elimination_count = self.get_solved_count()
             self.eliminate_singular_values_peers()
             self.do_all_type1_elims()
-            self.apply_all_naked_pair_elims(cascade=True)
+            self.apply_all_naked_pair_elims()
             post_elimination_count = self.get_solved_count()
             stalled = pre_elimination_count == post_elimination_count
         self.check_if_board_is_solvable_for_all_peers()
@@ -182,26 +182,26 @@ class SudokuSolver(object):
                 self.logger.info('Type 1 elimination for {0}: {1} with value {2}'.format(identifier, box, key))
                 self.eliminate_from_peers(key, box)
 
-    def apply_all_naked_pair_elims(self, cascade:bool=True):
-        self.apply_naked_pair_elims_with_cols(cascade)
-        self.apply_naked_pair_elims_with_rows(cascade)
-        self.apply_naked_pair_elims_with_boxes(cascade)
-        self.apply_naked_pair_with_select_peers(list(self.left_diagonal), 'left-diaganol', cascade=cascade)
-        self.apply_naked_pair_with_select_peers(list(self.right_diagonal), 'left-diaganol', cascade=cascade)
+    def apply_all_naked_pair_elims(self):
+        self.apply_naked_pair_elims_with_cols()
+        self.apply_naked_pair_elims_with_rows()
+        self.apply_naked_pair_elims_with_boxes()
+        self.apply_naked_pair_with_select_peers(list(self.left_diagonal), 'left-diaganol')
+        self.apply_naked_pair_with_select_peers(list(self.right_diagonal), 'left-diaganol')
 
-    def apply_naked_pair_elims_with_cols(self, cascade):
+    def apply_naked_pair_elims_with_cols(self):
         for col in SudokuUtils.all_cols:
-            self.apply_naked_pair_with_select_peers(col, 'col', cascade)
+            self.apply_naked_pair_with_select_peers(col, 'col')
 
-    def apply_naked_pair_elims_with_rows(self, cascade):
+    def apply_naked_pair_elims_with_rows(self):
         for row in SudokuUtils.all_rows:
-            self.apply_naked_pair_with_select_peers(row, 'row', cascade)
+            self.apply_naked_pair_with_select_peers(row, 'row')
 
-    def apply_naked_pair_elims_with_boxes(self, cascade):
+    def apply_naked_pair_elims_with_boxes(self):
         for box in SudokuUtils.all_boxes:
-            self.apply_naked_pair_with_select_peers(box, 'box', cascade)
+            self.apply_naked_pair_with_select_peers(box, 'box')
 
-    def apply_naked_pair_with_select_peers(self, group_peer: List[str], identifier: str, cascade: bool) -> bool:
+    def apply_naked_pair_with_select_peers(self, group_peer: List[str], identifier: str):
         self.logger.info('processsing {0}: {1} for naked pairs'.format(identifier, group_peer[0]))
         unsolved_map = {}
         unsolved_boxes = set()
@@ -222,9 +222,9 @@ class SudokuSolver(object):
                 continue
             boxes_to_change = unsolved_boxes - unsolved_map[unsolved_combination]
             if boxes_to_change:
-                self.remove_numbers_from_sequence(unsolved_combination, boxes_to_change, cascade)
+                self.remove_numbers_from_sequence(unsolved_combination, boxes_to_change)
 
-    def remove_numbers_from_sequence(self, to_remove: str, boxes_to_change: Set[str], cascade: bool):
+    def remove_numbers_from_sequence(self, to_remove: str, boxes_to_change: Set[str]):
         for box in boxes_to_change:
             current_value = self.board[box]
             for num in to_remove:
@@ -232,8 +232,6 @@ class SudokuSolver(object):
             if current_value == '':
                 raise InvalidBoardException('{0} is blank'.format(box))
             self.board[box] = current_value
-            if cascade and len(current_value) == 1:
-                self.eliminate_from_peers(current_value, box)
 
     def solve_the_puzzle(self):
         self.base_eliminate()
