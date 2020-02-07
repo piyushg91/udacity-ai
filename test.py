@@ -36,16 +36,16 @@ class Timeout:
 
 
 class SolverTest(TestCase):
-    def run_solver(self, input_str: str):
+    def run_solver(self, input_str: str, diag_enabled: bool=True):
         logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         with Timeout(seconds=5):
             d = SudokuSolver.create_dict_from_str_input(input_str)
-            solver = SudokuSolver(d)
+            solver = SudokuSolver(d, diagonal_enabled=diag_enabled)
             solver.solve_the_puzzle()
 
     def test_one(self):
         input_str = '..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..'
-        self.run_solver(input_str)
+        self.run_solver(input_str, False)
 
     def test_two(self):
         input_str = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'

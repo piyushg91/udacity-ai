@@ -1,4 +1,4 @@
-from typing import Dict, Set
+from typing import Dict, Set, Tuple
 
 
 rows = 'ABCDEFGHI'
@@ -27,6 +27,15 @@ class SudokuUtils(object):
             'col': cls.all_cols,
             'boxes': cls.all_boxes,
             'diags': [list(cls.left_diagonal), list(cls.right_diagonal)]
+        }
+        return units
+
+    @classmethod
+    def get_all_units_without_diags(cls):
+        units = {
+            'row': cls.all_rows,
+            'col': cls.all_cols,
+            'boxes': cls.all_boxes,
         }
         return units
 
@@ -70,16 +79,19 @@ class SudokuUtils(object):
         return [row + col for row in cls.rows for col in cls.cols]
 
     @classmethod
-    def get_peers_map(cls) -> Dict[str, Set[str]]:
-        global_peers = {}
+    def get_peers_map(cls) -> Tuple[Dict[str, Set[str]], Dict[str, Set[str]]]:
+        global_peers, peers_without_diags = {}, {}
         for box in cls.get_all_box_indicies():
             row = set(cls.get_row_peers(box))
             col = set(cls.get_col_peers(box))
             box_peers = set(cls.get_box_peers(box))
             all_peers = row.union(col).union(box_peers)
+            peers_without_diags[box] = all_peers
+
             if box in cls.left_diagonal:
                 all_peers = all_peers.union(cls.left_diagonal)
             if box in cls.right_diagonal:
                 all_peers = all_peers.union(cls.right_diagonal)
             global_peers[box] = all_peers
-        return global_peers
+        return global_peers, peers_without_diags
+
