@@ -1,4 +1,5 @@
 import signal
+import logging
 from sudoku import SudokuSolver
 from unittest import TestCase
 
@@ -35,6 +36,7 @@ class Timeout:
 
 class SolverTest(TestCase):
     def run_solver(self, input_str: str):
+        logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         with Timeout(seconds=5):
             d = SudokuSolver.create_dict_from_str_input(input_str)
             solver = SudokuSolver(d)

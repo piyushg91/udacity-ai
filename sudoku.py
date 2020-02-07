@@ -275,32 +275,6 @@ class SudokuSolver(object):
         else:
             raise Exception('Could not solve puzzle')
 
-    def solve_puzzle_2(self):
-        self.pre_process()
-        self.base_eliminate()
-        self.output_board()
-        unsolved_diagonals = []
-        for box in SudokuUtils.get_all_box_indicies():
-            if box in self.left_diagonal or box in self.right_diagonal:
-                value = self.board[box]
-                if len(value) > 1:
-                    unsolved_diagonals.append(box)
-        unsolved_diagonals.sort(key=lambda x: len(self.board[x]))
-        for i in self.yield_board_with_solved_diagonals(unsolved_diagonals, 0):
-            self.logger.info('Found valid board')
-            i.output_board()
-
-    def check_if_board_is_valid(self):
-        errors = []
-        for row in self.get_rows_as_list():
-            errors += self.check_if_peer_is_valid(row, 'row')
-        for col in self.get_cols_as_list():
-            errors += self.check_if_peer_is_valid(col, 'col')
-        for box in self.get_boxs_as_list():
-            errors += self.check_if_peer_is_valid(box, 'box')
-        if errors:
-            raise InvalidBoardException('\n'.join(errors))
-
     def check_if_peer_is_valid(self, peer: List[str], identifier: str):
         seen = set()
         errors = []
