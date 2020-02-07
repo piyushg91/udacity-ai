@@ -20,8 +20,15 @@ class SudokuUtils(object):
     left_diagonal = {row + cols[i]for i, row in enumerate(rows)}
     right_diagonal = {row + reversed_cols[i] for i, row in enumerate(rows)}
 
-    def __init__(self):
-        pass
+    @classmethod
+    def get_all_units(cls):
+        units = {
+            'row': cls.all_rows,
+            'col': cls.all_cols,
+            'boxes': cls.all_boxes,
+            'diags': [list(cls.left_diagonal), list(cls.right_diagonal)]
+        }
+        return units
 
     @classmethod
     def get_col_peers(cls, target_box: str):

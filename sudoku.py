@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Optional
 from sudoku_utils import SudokuUtils
 
 
@@ -14,11 +14,15 @@ class UdacityException(Exception):
 class SudokuSolver(object):
     peer_map = SudokuUtils.get_peers_map()
 
-    def __init__(self, starting_grid: Dict[str, str], depth: int=1):
+    def __init__(self, starting_grid: Dict[str, str], units: Optional[Dict]=None, depth:int=1):
         self.board = starting_grid
         self.logger = logging.getLogger('Main Logger ' + str(depth))
         self.depth = depth
         self.logger.info('Instantiated with depth ' + str(self.depth))
+        if not units:
+            self.units = SudokuUtils.get_all_units()
+        else:
+            self.units = units
 
     def eliminate_singular_values_peers(self):
         """ If we find a box that's already solved, eliminate from its peers
@@ -129,26 +133,10 @@ class SudokuSolver(object):
     def do_all_type1_elims(self):
         """
         """
-        self.do_type_1_elims_with_cols()
-        self.do_type_1_elims_with_row()
-        self.do_type_1_elims_with_box()
-        self.do_type_1_elims_with_diags()
-
-    def do_type_1_elims_with_cols(self):
-        for col in SudokuUtils.all_cols:
-            self.do_type_1_eliminations(col, 'col')
-
-    def do_type_1_elims_with_row(self):
-        for row in SudokuUtils.all_rows:
-            self.do_type_1_eliminations(row, 'row')
-
-    def do_type_1_elims_with_box(self):
-        for box in SudokuUtils.all_boxes:
-            self.do_type_1_eliminations(box, 'box')
-
-    def do_type_1_elims_with_diags(self):
-        self.do_type_1_eliminations(list(SudokuUtils.left_diagonal), 'left-diag')
-        self.do_type_1_eliminations(list(SudokuUtils.right_diagonal), 'right-diag')
+        for identifier in self.units:
+            units = self.units[identifier]
+            for unit in units:
+                self.do_type_1_eliminations(unit, identifier)
 
     def do_type_1_eliminations(self, group_peer: List[str], identifier: str):
         count_map = {str(i): [] for i in range(1, 10)}
@@ -165,23 +153,10 @@ class SudokuSolver(object):
                 self.eliminate_from_peers(key, box)
 
     def apply_all_naked_pair_elims(self):
-        self.apply_naked_pair_elims_with_cols()
-        self.apply_naked_pair_elims_with_rows()
-        self.apply_naked_pair_elims_with_boxes()
-        self.apply_naked_pair_with_select_peers(list(SudokuUtils.left_diagonal), 'left-diaganol')
-        self.apply_naked_pair_with_select_peers(list(SudokuUtils.right_diagonal), 'left-diaganol')
-
-    def apply_naked_pair_elims_with_cols(self):
-        for col in SudokuUtils.all_cols:
-            self.apply_naked_pair_with_select_peers(col, 'col')
-
-    def apply_naked_pair_elims_with_rows(self):
-        for row in SudokuUtils.all_rows:
-            self.apply_naked_pair_with_select_peers(row, 'row')
-
-    def apply_naked_pair_elims_with_boxes(self):
-        for box in SudokuUtils.all_boxes:
-            self.apply_naked_pair_with_select_peers(box, 'box')
+        for identifier in self.units:
+            units = self.units[identifier]
+            for unit in units:
+                self.apply_naked_pair_with_select_peers(unit, identifier)
 
     def apply_naked_pair_with_select_peers(self, group_peer: List[str], identifier: str):
         self.logger.info('processsing {0}: {1} for naked pairs'.format(identifier, group_peer[0]))
@@ -237,10 +212,8 @@ class SudokuSolver(object):
         unsolved_box, unsolved_pos_values = unsolved[0]
         for unsolved_pos in unsolved_pos_values:
             new_grid = self.board.copy()
-            new_solver = SudokuSolver(new_grid, depth=self.depth + 1)
+            new_solver = SudokuSolver(new_grid, depth=self.depth + 1, units=self.units)
             new_solver.output_board()
-            if new_solver.depth == 11 and unsolved_pos == '7' and unsolved_pos_values == '47' and unsolved_box == 'G8':
-                print('')
             new_solver.logger.info('Picking {0} from {1} for {2}'.format(unsolved_pos, unsolved_pos_values,
                                                                          unsolved_box))
             try:
