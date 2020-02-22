@@ -23,6 +23,5 @@ class TSSolverTest(TestCase):
         ]
         for x in expected_paths:
             self.assertIn(x, successor_paths)
-
         assert all(contains(successor_paths, x) for x in expected_paths), \
             "It looks like your successors list does not implement the suggested neighborhood function."

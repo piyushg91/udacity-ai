@@ -1,5 +1,4 @@
-
-from sample_players import DataPlayer
+from Projects.adverserial_search.sample_players import DataPlayer
 
 
 class CustomPlayer(DataPlayer):

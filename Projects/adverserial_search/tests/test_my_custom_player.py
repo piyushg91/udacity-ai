@@ -5,9 +5,9 @@ from collections import deque
 from random import choice
 from textwrap import dedent
 
-from isolation import Isolation, Agent, fork_get_action, play, DebugState
-from sample_players import RandomPlayer
-from my_custom_player import CustomPlayer
+from Projects.adverserial_search.isolation import Isolation, Agent, fork_get_action, play, DebugState
+from Projects.adverserial_search.sample_players import RandomPlayer
+from Projects.adverserial_search.my_custom_player import CustomPlayer
 
 
 class BaseCustomPlayerTest(unittest.TestCase):
@@ -61,7 +61,7 @@ class CustomPlayerPlayTest(BaseCustomPlayerTest):
         while moves: state = state.result(moves.popleft())
 
         if not state.terminal_test():
-            print(f"Your agent with id:{state.player()} was not able to make a move in state:")
+            print("Your agent with id:{state.player()} was not able to make a move in state:")
             debug_state = DebugState.from_state(state)
             print(debug_state)
                        
