@@ -106,5 +106,10 @@ class SymLogicTest(TestCase):
         self.assertEqual(correct, SymLogicParser.determine_first_and_second_input(inp))
 
         inp = 'p ^ ((p => q) V q)'
-        correct = 'p', '^', '(p => q) v q'
+        correct = 'p', '^', '(p => q) V q'
+        self.assertEqual(correct, SymLogicParser.determine_first_and_second_input(inp))
+
+        inp = '(p => q) ^ q'
+        correct = 'p => q', '^', 'q'
+        self.assertEqual(correct, SymLogicParser.determine_first_and_second_input(inp))
 

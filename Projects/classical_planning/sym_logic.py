@@ -32,7 +32,7 @@ class SymLogicParser(object):
                 if paranthes_left == 0:
                     if not found_first:
                         found_first = True
-                        first = statement[:i]
+                        first = statement[:i + 1]
                     else:
                         raise Exception('SHould not happen')
             elif paranthes_left > 0:
@@ -54,6 +54,8 @@ class SymLogicParser(object):
         second = second.rstrip().rstrip()
         if second[0] == '(' and second[-1] == ')':
             second = second[1:-1]
+        if first[0] == '(' and first[-1] == ')':
+            first = first[1:-1]
         return first, operator, second
 
     def create_column(self, statement: str):
