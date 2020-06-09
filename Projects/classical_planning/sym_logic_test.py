@@ -9,10 +9,10 @@ class SymLogicTest(TestCase):
         self.parser3 = SymLogicParser(['A', 'B', 'C'])
 
     def test__init__(self):
-        correct1 = [(True,), (False,)]
-        correct2 = [(True, True), (True, False), (False, True), (False, False)]
-        correct3 = [(True, True, True), (True, True, False), (True, False, True), (True, False, False),
-                    (False, True, True), (False, True, False), (False, False, True), (False, False, False)]
+        correct1 = {(True,), (False,)}
+        correct2 = {(True, True), (True, False), (False, True), (False, False)}
+        correct3 = {(True, True, True), (True, True, False), (True, False, True), (True, False, False),
+                    (False, True, True), (False, True, False), (False, False, True), (False, False, False)}
         self.assertEqual(correct1, self.parser1.pos)
         self.assertEqual(correct2, self.parser2.pos)
         self.assertEqual(correct3, self.parser3.pos)
@@ -28,7 +28,6 @@ class SymLogicTest(TestCase):
         correct = [True, False, False, False]
         seen = self.parser2.create_column(inp)
         self.assertEqual(correct, seen)
-
 
     def test3(self):
         inp = '~(~P V ~Q)'
