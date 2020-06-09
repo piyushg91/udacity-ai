@@ -19,17 +19,27 @@ class SymLogicTest(TestCase):
 
     def test_not_p(self):
         inp = '~P'
-        correct = [False, True]
+        correct = {{'P': True}: {False},
+                   {'P': False}: {True}}
         seen = self.parser1.create_column(inp)
         self.assertEqual(correct, seen)
 
     def test_and(self):
         inp = 'P ^ Q'
-        correct = [True, False, False, False]
+        p, q = 'P', 'Q'
+        correct = {{p: True, q: True}: True,
+                   {p: False, q: True}: False,
+                   {p: True, q: False}: False,
+                   {p: False, q: False}: False}
         seen = self.parser2.create_column(inp)
         self.assertEqual(correct, seen)
 
     def test3(self):
         inp = '~(~P V ~Q)'
-        correct = [True, False, False, False]
+        p, q = 'P', 'Q'
+        correct = {{p: True, q: True}: True,
+                   {p: False, q: True}: False,
+                   {p: True, q: False}: False,
+                   {p: False, q: False}: False}
+        seen = self.parser2.create_column(inp)
         self.assertEqual(correct, seen)
