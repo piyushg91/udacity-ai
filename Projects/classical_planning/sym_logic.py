@@ -36,10 +36,11 @@ class SymLogicParser(object):
         if statement in self.cache:
             return self.cache[statement]
         output = {}
-        for bool_key in self.pos:
+        # Otherwise Build it
+        for p_bool, q_bool in self.pos:
+            bool_key = (p_bool, q_bool)
             output[bool_key] = self.process_statement(statement, bool_key)
         return output
-        # Otherwise Build it
 
     @staticmethod
     def determine_first_and_second_input(statement: str):
@@ -98,7 +99,7 @@ class SymLogicParser(object):
             return self.cache[statement][bool_key]
         elif statement.startswith('~(') and statement.endswith(')'):
             # Something ~(~p V ~q)
-            new_statement = statement[1:-1]
+            new_statement = statement[2:-1]
             return not self.process_statement(new_statement, bool_key)
         else:
             first, operator, second = self.determine_first_and_second_input(statement)
@@ -106,12 +107,12 @@ class SymLogicParser(object):
 
     def process_with_operator(self, first, second, operator, bool_key: Tuple[bool, bool]) -> bool:
         if first not in self.cache:
-            pass
+            first_bool = self.process_statement(first, bool_key)
         else:
             first_bool = self.cache[first][bool_key]
 
         if second not in self.cache:
-            pass
+            second_bool = self.process_statement(second, bool_key)
         else:
             second_bool = self.cache[second][bool_key]
 
@@ -125,26 +126,6 @@ class SymLogicParser(object):
             return first_bool == second_bool
         else:
             raise Exception('Unexpected operator' + operator)
-
-    def create_column(self, statement: str):
-        column = {}
-        for p_bool, q_bool in self.pos:
-            key = (p_bool, q_bool)
-            if statement.find('~') != -1:
-                to_nullify = statement[1]
-                index_order = self.index_order[to_nullify]
-                column[key] = not key[index_order]
-            elif statement.find('^') != -1:
-                column[key] = p_bool and q_bool
-            elif statement.find('V') != -1:
-                column[key] = p_bool or q_bool
-            elif statement.find(' =>') != -1:
-                column[key] = self.get_implies_value(statement, key)
-            elif statement.find('<=>') != -1:
-                column[key] = p_bool == q_bool
-            else:
-                raise Exception('Do not know what to do with ' + statement)
-        return column
 
     def get_implies_value(self, sub_statement: str, input_key: Tuple[bool, bool]):
         first, second = sub_statement[0], sub_statement[5]

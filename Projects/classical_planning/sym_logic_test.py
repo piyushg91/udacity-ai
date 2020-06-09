@@ -50,7 +50,7 @@ class SymLogicTest(TestCase):
                    (False, True): True,
                    (True, False):  True,
                    (False, False): False}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_implies(self):
@@ -59,7 +59,7 @@ class SymLogicTest(TestCase):
                    (False, True): True,
                    (True, False):  False,
                    (False, False): True}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_implies_backwards(self):
@@ -68,7 +68,7 @@ class SymLogicTest(TestCase):
                    (False, True): False,
                    (True, False):  True,
                    (False, False): True}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_equivalence(self):
@@ -77,7 +77,7 @@ class SymLogicTest(TestCase):
                    (False, True): False,
                    (True, False):  False,
                    (False, False): True}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_complicated_one(self):
@@ -86,7 +86,7 @@ class SymLogicTest(TestCase):
                    (False, True): False,
                    (True, False):  False,
                    (False, False): False}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_complicated_two(self):
@@ -95,7 +95,7 @@ class SymLogicTest(TestCase):
                    (False, True): False,
                    (True, False):  False,
                    (False, False): False}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_complicated_three(self):
@@ -104,7 +104,7 @@ class SymLogicTest(TestCase):
                    (False, True): True,
                    (True, False):  True,
                    (False, False): True}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_determine_first_and_second_input(self):
