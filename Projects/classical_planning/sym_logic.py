@@ -22,9 +22,12 @@ class SymLogicParser(object):
             elif statement.find('V') != -1:
                 column[key] = p_bool or q_bool
             elif statement.find(' =>') != -1:
-                pass
+                if p_bool and not q_bool:
+                    column[key] = False
+                else:
+                    column[key] = True
             elif statement.find('<=>') != -1:
-                pass
+                column[key] = p_bool == q_bool
             else:
                 raise Exception('Do not know what to do with ' + statement)
         return column

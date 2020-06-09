@@ -26,13 +26,48 @@ class SymLogicTest(TestCase):
         seen = self.parser2.create_column(inp)
         self.assertEqual(correct, seen)
 
+    def test_not_q(self):
+        inp = '~q'
+        correct = {(True, True): False,
+                   (True, False): True,
+                   (False, True): False,
+                   (False, False): True}
+        seen = self.parser2.create_column(inp)
+        self.assertEqual(correct, seen)
+
     def test_and(self):
         inp = 'p ^ q'
-        p, q = 'p', 'q'
-        correct = {{p: True, q: True}: True,
-                   {p: False, q: True}: False,
-                   {p: True, q: False}: False,
-                   {p: False, q: False}: False}
+        correct = {(True, True): True,
+                   (False, True): False,
+                   (True, False): False,
+                   (False, False): False}
+        seen = self.parser2.create_column(inp)
+        self.assertEqual(correct, seen)
+
+    def test_or(self):
+        inp = 'p V q'
+        correct = {(True, True): True,
+                   (False, True): True,
+                   (True, False):  True,
+                   (False, False): False}
+        seen = self.parser2.create_column(inp)
+        self.assertEqual(correct, seen)
+
+    def test_implies(self):
+        inp = 'p => q'
+        correct = {(True, True): True,
+                   (False, True): True,
+                   (True, False):  False,
+                   (False, False): True}
+        seen = self.parser2.create_column(inp)
+        self.assertEqual(correct, seen)
+
+    def test_equivalence(self):
+        inp = 'p <=> q'
+        correct = {(True, True): True,
+                   (False, True): False,
+                   (True, False):  False,
+                   (False, False): True}
         seen = self.parser2.create_column(inp)
         self.assertEqual(correct, seen)
 
