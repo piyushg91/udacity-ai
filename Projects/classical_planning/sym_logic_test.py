@@ -62,6 +62,15 @@ class SymLogicTest(TestCase):
         seen = self.parser2.create_column(inp)
         self.assertEqual(correct, seen)
 
+    def test_implies_backwards(self):
+        inp = 'q => p'
+        correct = {(True, True): True,
+                   (False, True): False,
+                   (True, False):  True,
+                   (False, False): True}
+        seen = self.parser2.create_column(inp)
+        self.assertEqual(correct, seen)
+
     def test_equivalence(self):
         inp = 'p <=> q'
         correct = {(True, True): True,
