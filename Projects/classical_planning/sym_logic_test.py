@@ -23,7 +23,7 @@ class SymLogicTest(TestCase):
                    (True, False): False,
                    (False, True): True,
                    (False, False): True}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_not_q(self):
@@ -32,7 +32,7 @@ class SymLogicTest(TestCase):
                    (True, False): True,
                    (False, True): False,
                    (False, False): True}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_and(self):
@@ -41,7 +41,7 @@ class SymLogicTest(TestCase):
                    (False, True): False,
                    (True, False): False,
                    (False, False): False}
-        seen = self.parser2.create_column(inp)
+        seen = self.parser2.get_column_vals(inp)
         self.assertEqual(correct, seen)
 
     def test_or(self):

@@ -7,7 +7,39 @@ class SymLogicParser(object):
         self.syms = ['p', 'q']
         self.index_order = {'p': 0, 'q': 1}
         possibilities = [True, False]
+        self.cache = self._initialize_cache()
         self.pos = set(itertools.product(possibilities, repeat=len(self.syms)))
+
+    @staticmethod
+    def _initialize_cache():
+        cache = {
+            'p': {(False, False): False,
+                  (False, True): False,
+                  (True, False): True,
+                  (True, True): True},
+            '~p': {(False, False): True,
+                  (False, True): True,
+                  (True, False): False,
+                  (True, True): False},
+            'q': {(False, False): False,
+                  (False, True): True,
+                  (True, False): False,
+                  (True, True): True},
+            '~q': {(False, False): True,
+                  (False, True): False,
+                  (True, False): True,
+                  (True, True): False},
+        }
+        return cache
+
+    def get_column_vals(self, statement: str):
+        if statement in self.cache:
+            return self.cache[statement]
+        output = {}
+        for bool_key in self.pos:
+            output[bool_key] = self.process_statement(statement, bool_key)
+        return output
+        # Otherwise Build it
 
     @staticmethod
     def determine_first_and_second_input(statement: str):
@@ -57,6 +89,42 @@ class SymLogicParser(object):
         if first[0] == '(' and first[-1] == ')':
             first = first[1:-1]
         return first, operator, second
+
+    def process_statement(self, statement: str, bool_key: Tuple[bool, bool]) -> bool:
+        """
+        if statement in cache
+        """
+        if statement in self.cache:
+            return self.cache[statement][bool_key]
+        elif statement.startswith('~(') and statement.endswith(')'):
+            # Something ~(~p V ~q)
+            new_statement = statement[1:-1]
+            return not self.process_statement(new_statement, bool_key)
+        else:
+            first, operator, second = self.determine_first_and_second_input(statement)
+            return self.process_with_operator(first, second, operator, bool_key)
+
+    def process_with_operator(self, first, second, operator, bool_key: Tuple[bool, bool]) -> bool:
+        if first not in self.cache:
+            pass
+        else:
+            first_bool = self.cache[first][bool_key]
+
+        if second not in self.cache:
+            pass
+        else:
+            second_bool = self.cache[second][bool_key]
+
+        if operator == '^':
+            return first_bool and second_bool
+        elif operator == 'V':
+            return first_bool or second_bool
+        elif operator == '=>':
+            return not (first_bool and not second_bool)
+        elif operator == '<=>':
+            return first_bool == second_bool
+        else:
+            raise Exception('Unexpected operator' + operator)
 
     def create_column(self, statement: str):
         column = {}
