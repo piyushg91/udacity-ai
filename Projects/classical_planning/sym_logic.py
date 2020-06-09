@@ -9,6 +9,53 @@ class SymLogicParser(object):
         possibilities = [True, False]
         self.pos = set(itertools.product(possibilities, repeat=len(self.syms)))
 
+    @staticmethod
+    def determine_first_and_second_input(statement: str):
+        found_first, found_operator = False, False
+        first, operator, second = '', '', ''
+        skip_counter = 0
+        paranthes_left = 0
+        for i, letter in enumerate(statement):
+            if letter == ' ':
+                continue
+            if skip_counter > 0:
+                skip_counter -= 1
+                continue
+            if found_operator:
+                second = statement[i:]
+                break
+            elif letter == '(':
+                paranthes_left += 1
+            elif letter == ')':
+                paranthes_left -= 1
+                # Have we reached the end?
+                if paranthes_left == 0:
+                    if not found_first:
+                        found_first = True
+                        first = statement[:i]
+                    else:
+                        raise Exception('SHould not happen')
+            elif paranthes_left > 0:
+                continue
+            elif letter in {'^', 'V', '<', '='} and not found_operator:
+                if not found_first:
+                    found_first = True
+                    first = statement[:i]
+                found_operator = True
+                if letter == '<':
+                    skip_counter = 2
+                    operator = '<=>'
+                elif letter == '=':
+                    skip_counter = 1
+                    operator = '=>'
+                else:
+                    operator = letter
+        first = first.rstrip().lstrip()
+        second = second.rstrip().rstrip()
+        if second[0] == '(' and second[-1] == ')':
+            second = second[1:-1]
+        return first, operator, second
+
     def create_column(self, statement: str):
         column = {}
         for p_bool, q_bool in self.pos:

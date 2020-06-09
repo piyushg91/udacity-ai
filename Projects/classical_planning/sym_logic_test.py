@@ -80,6 +80,16 @@ class SymLogicTest(TestCase):
         seen = self.parser2.create_column(inp)
         self.assertEqual(correct, seen)
 
+    def test_complicated_one(self):
+        inp = 'p ^ (p => q)'
+        p, q = 'p', 'q'
+        correct = {{p: True, q: True}: True,
+                   {p: False, q: True}: False,
+                   {p: True, q: False}: False,
+                   {p: False, q: False}: False}
+        seen = self.parser2.create_column(inp)
+        self.assertEqual(correct, seen)
+
     def test3(self):
         inp = '~(~p V ~q)'
         p, q = 'p', 'q'
@@ -89,3 +99,12 @@ class SymLogicTest(TestCase):
                    {p: False, q: False}: False}
         seen = self.parser2.create_column(inp)
         self.assertEqual(correct, seen)
+
+    def test_determine_first_and_second_input(self):
+        inp = 'p ^ (p => q)'
+        correct = 'p', '^', 'p => q'
+        self.assertEqual(correct, SymLogicParser.determine_first_and_second_input(inp))
+
+        inp = 'p ^ ((p => q) V q)'
+        correct = 'p', '^', '(p => q) v q'
+
